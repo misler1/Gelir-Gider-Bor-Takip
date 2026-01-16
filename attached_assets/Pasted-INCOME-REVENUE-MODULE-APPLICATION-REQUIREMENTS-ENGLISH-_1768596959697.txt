@@ -1,0 +1,467 @@
+INCOME (REVENUE) MODULE – APPLICATION REQUIREMENTS (ENGLISH)
+
+I want to build a personal finance application that includes Income, Expenses, Debt Tracking, and Debt Simulation modules.
+We will develop each module separately and then integrate them into a single application.
+
+Below are the detailed requirements for the Income module.
+
+1. General UI / UX
+
+The application should have a soft, friendly, and pleasant UI.
+
+Even though this is a debt and finance app, the interface should feel calm and reassuring.
+
+Use modern card-based design and clear typography.
+
+2. Income Main Page (Dashboard)
+
+At the top of the Income page, there should be two summary cards:
+
+Monthly Expected Income
+
+Cash Balance
+
+3. Add Income Button
+
+Below the summary cards, there should be an “Add Income (+)” button.
+
+This button is used to create a new income entry.
+
+4. Add Income Page (Separate Screen)
+
+When the Add Income (+) button is clicked:
+
+Open a new full page / screen, not a notification panel or toast.
+
+This page is dedicated only to income creation and editing.
+
+5. Income Entry Form
+
+The Add Income page should include the following fields:
+
+Income Name
+
+Amount
+
+Income Date
+
+Recurring Income Checkbox
+
+If recurring is enabled, allow selecting frequency:
+
+Weekly
+
+Monthly
+
+Yearly
+
+When an amount is entered and the income is recurring:
+
+Automatically apply the same amount to future periods.
+
+6. 24-Month Income Schedule Table
+
+Below the form, display a 24-month schedule table with the following columns:
+
+Income Name
+
+Amount
+
+Date
+
+Table Behavior:
+
+Amount field must be editable
+
+Date field must be editable
+
+Example:
+
+For a monthly salary, I should be able to:
+
+Change the amount for June only
+
+Change the income date for June only
+
+Editing one month must not affect other months unless explicitly changed.
+
+7. Save Income
+
+At the bottom of the page, place a Save button.
+
+When saved:
+
+Income entries should appear on the Income main page.
+
+Summary cards (Monthly Expected Income and Cash Balance) must update accordingly.
+
+8. Income Listing Rules
+
+On the Income main page:
+
+List incomes only for the currently selected month
+
+Even if the income is recurring for 24 months, do not list all months
+
+Example row format:
+
+Salary | 62,000 | 05.02.2025 | Edit | Delete
+
+9. Edit & Delete
+
+Clicking Edit:
+
+Opens the same Add Income page
+
+Pre-filled with the selected income’s data
+
+Clicking Delete:
+
+Removes the income entry
+
+10. Past Income Visibility
+
+Do not show past months’ incomes by default.
+
+Example:
+
+If the current month is January, December incomes should not be visible.
+
+11. Filtering & Reporting
+
+Allow filtering the income list by:
+
+Specific month (e.g., March)
+
+Custom range (e.g., last 6 months)
+
+When filtering:
+
+The income list updates
+
+Monthly Expected Income card updates based on the filter
+
+12. Monthly Expected Income Logic
+
+When no filter is applied:
+
+Show the expected total income for the next month, calculated based on entered data
+
+Example: “Expected income as of the 5th of next month”
+
+When a filter is applied:
+
+This value must reflect the filtered data only
+
+13. Cash Balance Logic
+
+Income entries should include a “Received” checkbox
+
+Rules:
+
+If income is not marked as received, it does NOT affect Cash Balance
+
+When marked as received:
+
+The amount is added to Cash Balance immediately
+
+If income arrives earlier or later than expected:
+
+User manually marks it as received when it actually arrives
+
+14. Future Integration Note
+
+Later, when Expenses and Debt modules are implemented:
+
+Approved expenses and debt payments will deduct from Cash Balance
+
+This logic should be designed to support future integration
+
+EXPENSES MODULE – APPLICATION REQUIREMENTS (ENGLISH)
+
+Below are the same rules adapted for the Expenses module.
+
+1. General UI / UX
+
+The Expenses module should visually match the Income module.
+
+Maintain a calm, friendly, and modern design.
+
+2. Expenses Main Page (Dashboard)
+
+At the top of the Expenses page, show two summary cards:
+
+Monthly Planned Expenses
+
+Cash Balance
+
+3. Add Expense Button
+
+Below the summary cards, include an “Add Expense (+)” button.
+
+4. Add Expense Page (Separate Screen)
+
+Clicking Add Expense (+) opens a new full page.
+
+This page is used for both adding and editing expenses.
+
+5. Expense Entry Form
+
+Fields required:
+
+Expense Name
+
+Amount
+
+Expense Date
+
+Recurring Expense Checkbox
+
+Frequency options:
+
+Weekly
+
+Monthly
+
+Yearly
+
+When recurring:
+
+Automatically apply the same amount to future periods
+
+6. 24-Month Expense Schedule Table
+
+Display a 24-month expense schedule table with:
+
+Expense Name
+
+Amount
+
+Date
+
+Table Rules:
+
+Amount and Date fields must be editable per month
+
+Editing one month must not affect others
+
+7. Save Expense
+
+A Save button at the bottom
+
+Saved expenses appear on the Expenses main page
+
+Summary cards update accordingly
+
+8. Expense Listing Rules
+
+Only show expenses for the currently selected month
+
+Do not list all 24 months
+
+Example:
+
+Rent | 18,000 | 01.02.2025 | Edit | Delete
+
+9. Edit & Delete
+
+Edit opens the expense page with pre-filled data
+
+Delete removes the expense
+
+10. Past Expense Visibility
+
+Past expenses should not be shown by default
+
+11. Filtering & Reporting
+
+Allow filtering by:
+
+Month
+
+Custom range (e.g., last 6 months)
+
+Filtering updates:
+
+Expense list
+
+Monthly Planned Expenses card
+
+12. Monthly Planned Expenses Logic
+
+Without filters:
+
+Show total planned expenses for the next month
+
+With filters:
+
+Show totals based only on filtered data
+
+13. Cash Balance Interaction
+
+Expenses should include a “Paid” checkbox
+
+Rules:
+
+If not marked as paid → no effect on Cash Balance
+
+When marked as paid → deduct amount from Cash Balance
+
+If paid early or late → user controls payment confirmation manually
+
+14. Future Integration Note
+
+This module must integrate with:
+
+Income module
+
+Debt tracking module
+
+Cash Balance must always reflect approved incomes minus approved expenses and debts
+
+
+
+I am building a personal finance and debt repayment application.
+
+Income and Expense modules already exist.
+Now I want to create a new module called **Banks & Debts** and integrate it with Income and Expense data.
+
+GENERAL GOAL:
+After incomes and expenses are entered, on the 5th day of each month, the system should distribute the remaining expected income to bank debts according to strict rules.
+
+--------------------------------------------------
+1. BANKS & DEBTS PAGE – GENERAL STRUCTURE
+--------------------------------------------------
+
+• Create a page called **Banks & Debts**
+• The UI should be clean, friendly, and calm (this is a debt payment app).
+• Use cards and soft colors.
+• Each bank should be displayed as a separate card.
+
+--------------------------------------------------
+2. ADD BANK / DEBT FORM
+--------------------------------------------------
+
+Add a button: **Add Bank Debt**
+
+When clicked, open a new full-page form (not a popup).
+
+Fields:
+- Bank Name
+- Debt Type (Credit Card / Overdraft / KMH / Flexible Account)
+- Total Debt Amount
+- Interest Rate (%)
+- Interest Type (Daily interest / Monthly interest)
+- Minimum Payment Amount
+- Payment Due Day (default: 5)
+- Is this debt active? (checkbox)
+
+Save button at the bottom.
+
+--------------------------------------------------
+3. BANK LIST ON MAIN PAGE
+--------------------------------------------------
+
+On the Banks & Debts main page:
+List all banks with the following columns:
+
+- Bank Name
+- Debt Type
+- Total Remaining Debt
+- Minimum Payment
+- Interest Rate
+- Payment Status (Paid / Pending)
+- View Plan button
+
+Past months should not be shown.
+Only current and future months are visible.
+
+--------------------------------------------------
+4. MONTHLY PAYMENT LOGIC (VERY IMPORTANT)
+--------------------------------------------------
+
+Every month, on the 5th day:
+
+Use **EXPECTED INCOME**, not cash balance.
+
+Step 1:
+• Subtract all expenses for the month.
+• Calculate remaining expected income.
+
+Step 2:
+• Pay ONLY the minimum payment to ALL banks.
+
+Step 3:
+• After minimum payments are completed,
+  send **ALL remaining money to ONLY ONE bank**.
+
+Step 4:
+The selected bank must meet ALL of these criteria:
+• Highest interest rate
+• Interest is calculated daily
+• Debt type is Credit Card or KMH
+
+If multiple banks qualify, choose the one with the highest remaining debt.
+
+--------------------------------------------------
+5. PAYMENT PLAN GENERATION
+--------------------------------------------------
+
+For each bank:
+• Automatically generate a monthly payment plan.
+• Show:
+  - Month
+  - Starting Debt
+  - Interest Added
+  - Payment Made
+  - Remaining Debt
+
+When the user clicks **View Plan**, open a detailed payment schedule page for that bank.
+
+--------------------------------------------------
+6. INTEGRATION WITH INCOME & EXPENSES
+--------------------------------------------------
+
+• Payment calculations must use:
+  - Expected income (not cash)
+  - Approved expenses
+• Cash balance should not be reduced until payments are confirmed.
+
+--------------------------------------------------
+7. PAYMENT CONFIRMATION
+--------------------------------------------------
+
+• Each bank payment must have a checkbox: "Payment completed"
+• When checked:
+  - Reduce cash balance
+  - Update remaining debt
+• If unchecked, do NOT reduce cash balance.
+
+--------------------------------------------------
+8. FILTERING & MONTH VIEW
+--------------------------------------------------
+
+• Allow filtering by month (e.g. March, next 6 months)
+• Bank list and totals should update according to selected filter.
+• Monthly totals must reflect filtered data.
+
+--------------------------------------------------
+9. RULES & CONSTRAINTS
+--------------------------------------------------
+
+• Never pay more than available expected income.
+• Never skip minimum payments.
+• Never split extra money between multiple banks.
+• Extra payment always goes to ONE bank only.
+• Calculations must be transparent and explainable.
+
+--------------------------------------------------
+10. TECHNICAL NOTES
+--------------------------------------------------
+
+• Use reusable components.
+• State must persist after refresh.
+• Make the logic easy to extend later.
+• Prepare the system so future automation can be added.
+
+Build this module as part of the same application and ensure full integration with existing Income and Expense modules.
