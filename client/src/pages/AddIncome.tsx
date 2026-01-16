@@ -75,14 +75,15 @@ export default function AddIncome() {
 
     createIncome({
       name,
-      amount: parseFloat(amount),
-      date: new Date(date).toISOString(), // Use .toISOString() for DB
+      baseAmount: amount,
+      baseDate: new Date(date).toISOString(),
       isRecurring,
       frequency: isRecurring ? frequency : null,
-      entries: schedule.map(s => ({
-        date: new Date(s.date).toISOString(), // Ensure ISO string
-        amount: parseFloat(s.amount),
-        isReceived: false
+      monthlySchedule: schedule.map(s => ({
+        month: format(new Date(s.date), "yyyy-MM"),
+        date: new Date(s.date).toISOString(),
+        amount: s.amount,
+        approved: false
       }))
     }, {
       onSuccess: () => {

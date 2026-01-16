@@ -24,7 +24,16 @@ export async function registerRoutes(
 
   app.post(api.incomes.create.path, async (req, res) => {
     try {
-      const input = api.incomes.create.input.parse(req.body);
+      // Explicitly transform inputs if needed before parsing
+      const body = {
+        ...req.body,
+        baseAmount: String(req.body.baseAmount),
+        monthlySchedule: req.body.monthlySchedule?.map((s: any) => ({
+          ...s,
+          amount: String(s.amount)
+        })) || []
+      };
+      const input = api.incomes.create.input.parse(body);
       const income = await storage.createIncome(input);
       res.status(201).json(income);
     } catch (err) {
