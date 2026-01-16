@@ -1,0 +1,132 @@
+I already have an Income, Expense, and Bank Debt application.
+However, there are critical errors and missing features that must be fixed.
+
+Please DEBUG, FIX, and IMPROVE the existing system instead of rebuilding from scratch.
+
+--------------------------------------------------
+1. INCOME CREATION ERROR (CRITICAL)
+--------------------------------------------------
+
+Problem:
+• When I add an income (e.g. Salary),
+• Select recurring,
+• Edit the 24-month schedule,
+• And click Save,
+I get this error:
+
+"Error: Failed to create income"
+
+Required Fix:
+• Identify why the income creation fails when recurring + 24-month schedule exists.
+• Ensure the backend correctly accepts:
+  - recurring incomes
+  - custom edited monthly entries
+• Validate data before saving.
+• Prevent silent backend rejection.
+• Ensure the income is saved successfully after editing 24 months.
+
+--------------------------------------------------
+2. EXPENSE CREATION ERROR (CRITICAL)
+--------------------------------------------------
+
+Problem:
+• Same issue occurs in Expenses.
+• Example: Rent expense with 24-month planning.
+• After editing the monthly schedule and clicking Save, the expense is NOT created.
+
+Required Fix:
+• Apply the SAME solution logic used for Income.
+• Ensure recurring expenses with multi-month plans are saved correctly.
+• Backend must support arrays / schedules for expenses.
+
+--------------------------------------------------
+3. BANK DEBT SAVE ERROR (CRITICAL)
+--------------------------------------------------
+
+Problem:
+• When I create a new bank debt and click Save,
+• The record is NOT saved.
+• No bank appears in the list.
+
+Required Fix:
+• Debug the bank debt creation flow.
+• Ensure:
+  - All required fields are validated
+  - Backend API / storage accepts the bank object
+• Confirm successful creation before returning response.
+• Show meaningful error messages if saving fails.
+
+--------------------------------------------------
+4. MISSING EDIT BUTTON (INCOME & EXPENSE)
+--------------------------------------------------
+
+Problem:
+• In Income and Expense lists:
+  - Items appear correctly
+  - Delete button exists
+  - BUT there is NO Edit button
+
+Required Fix:
+• Add an **Edit button** next to each item:
+  - Income list
+  - Expense list
+
+Edit Button Behavior:
+• When clicked:
+  - Open the same form used for creation
+  - Pre-fill all data
+  - Allow editing:
+    - Name
+    - Amount
+    - Date
+    - Recurring settings
+    - 24-month schedule
+• Save changes correctly.
+
+--------------------------------------------------
+5. CURRENCY SETTING (IMPORTANT)
+--------------------------------------------------
+
+Problem:
+• Currency is missing or inconsistent.
+
+Required Fix:
+• Set the default and global currency to:
+  **Turkish Lira (TRY – ₺ / TL)**
+• Apply TL formatting consistently to:
+  - Income amounts
+  - Expense amounts
+  - Bank debts
+  - Payment plans
+• Use proper thousand separators.
+
+--------------------------------------------------
+6. DATA MODEL & VALIDATION (MANDATORY)
+--------------------------------------------------
+
+• Ensure recurring items store:
+  - base data
+  - monthly breakdown array
+• Backend must accept nested data structures.
+• Validate required fields before saving.
+• Prevent partial or broken saves.
+
+--------------------------------------------------
+7. UX & RELIABILITY IMPROVEMENTS
+--------------------------------------------------
+
+• Show clear error messages instead of generic "Failed to create".
+• Disable Save button while processing.
+• Confirm success after saving.
+• Ensure state updates immediately after save.
+
+--------------------------------------------------
+8. FINAL REQUIREMENT
+--------------------------------------------------
+
+• Do NOT remove existing data.
+• Do NOT reset the app.
+• Fix and enhance the current implementation.
+• Ensure all modules work together correctly.
+
+Focus on reliability, correct data handling, and user trust.

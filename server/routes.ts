@@ -19,8 +19,11 @@ export async function registerRoutes(
 
   app.post(api.incomes.create.path, async (req, res) => {
     try {
-      // Coerce string dates to Date objects in the input
-      const input = api.incomes.create.input.parse(req.body);
+      const input = api.incomes.create.input.parse({
+        ...req.body,
+        amount: String(req.body.amount),
+        entries: req.body.entries?.map((e: any) => ({ ...e, amount: String(e.amount) })) || []
+      });
       const income = await storage.createIncome(input);
       res.status(201).json(income);
     } catch (err) {
@@ -82,7 +85,11 @@ export async function registerRoutes(
 
   app.post(api.expenses.create.path, async (req, res) => {
     try {
-      const input = api.expenses.create.input.parse(req.body);
+      const input = api.expenses.create.input.parse({
+        ...req.body,
+        amount: String(req.body.amount),
+        entries: req.body.entries?.map((e: any) => ({ ...e, amount: String(e.amount) })) || []
+      });
       const expense = await storage.createExpense(input);
       res.status(201).json(expense);
     } catch (err) {
@@ -144,7 +151,12 @@ export async function registerRoutes(
 
   app.post(api.banks.create.path, async (req, res) => {
     try {
-      const input = api.banks.create.input.parse(req.body);
+      const input = api.banks.create.input.parse({
+        ...req.body,
+        totalDebt: String(req.body.totalDebt),
+        interestRate: String(req.body.interestRate),
+        minPaymentAmount: String(req.body.minPaymentAmount)
+      });
       const bank = await storage.createBank(input);
       res.status(201).json(bank);
     } catch (err) {

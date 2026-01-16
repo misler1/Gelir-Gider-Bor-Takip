@@ -7,7 +7,7 @@ import { z } from "zod";
 export const incomes = pgTable("incomes", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: text("amount").notNull(), // Store as string for decimal precision
   date: timestamp("date").notNull(),
   isRecurring: boolean("is_recurring").default(false),
   frequency: text("frequency"), // 'weekly', 'monthly', 'yearly'
@@ -17,7 +17,7 @@ export const incomeEntries = pgTable("income_entries", {
   id: serial("id").primaryKey(),
   incomeId: integer("income_id").references(() => incomes.id, { onDelete: 'cascade' }),
   date: timestamp("date").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: text("amount").notNull(),
   isReceived: boolean("is_received").default(false),
 });
 
@@ -25,7 +25,7 @@ export const incomeEntries = pgTable("income_entries", {
 export const expenses = pgTable("expenses", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: text("amount").notNull(),
   date: timestamp("date").notNull(),
   isRecurring: boolean("is_recurring").default(false),
   frequency: text("frequency"),
@@ -35,7 +35,7 @@ export const expenseEntries = pgTable("expense_entries", {
   id: serial("id").primaryKey(),
   expenseId: integer("expense_id").references(() => expenses.id, { onDelete: 'cascade' }),
   date: timestamp("date").notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: text("amount").notNull(),
   isPaid: boolean("is_paid").default(false),
 });
 
@@ -44,10 +44,10 @@ export const banks = pgTable("banks", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   debtType: text("debt_type").notNull(), // 'Credit Card', 'Overdraft', 'KMH', 'Flexible Account'
-  totalDebt: decimal("total_debt", { precision: 10, scale: 2 }).notNull(),
-  interestRate: decimal("interest_rate", { precision: 5, scale: 2 }).notNull(),
+  totalDebt: text("total_debt").notNull(),
+  interestRate: text("interest_rate").notNull(),
   interestType: text("interest_type").notNull(), // 'Daily', 'Monthly'
-  minPaymentAmount: decimal("min_payment_amount", { precision: 10, scale: 2 }).notNull(),
+  minPaymentAmount: text("min_payment_amount").notNull(),
   paymentDueDay: integer("payment_due_day").default(5),
   isActive: boolean("is_active").default(true),
 });
