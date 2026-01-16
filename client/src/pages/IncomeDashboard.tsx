@@ -34,7 +34,13 @@ export default function IncomeDashboard() {
   const endDate = format(endOfMonth(new Date(selectedMonth)), "yyyy-MM-dd");
 
   const { data: allEntries, isLoading: isLoadingEntries } = useIncomeEntries();
-  const entries = allEntries?.filter(e => format(new Date(e.date), "yyyy-MM") === selectedMonth);
+  
+  // Normalize dates for filtering to handle timezone offsets
+  const entries = allEntries?.filter(e => {
+    const entryDate = new Date(e.date);
+    const entryMonth = entryDate.getUTCFullYear() + "-" + String(entryDate.getUTCMonth() + 1).padStart(2, '0');
+    return entryMonth === selectedMonth;
+  });
   const { mutate: updateEntry } = useUpdateIncomeEntry();
   const { mutate: deleteIncome } = useDeleteIncome();
 
@@ -141,7 +147,7 @@ export default function IncomeDashboard() {
                 <TableHead>Source</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
+                <TableHead className="w-[120px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -171,30 +177,40 @@ export default function IncomeDashboard() {
                     <TableCell className="font-medium text-foreground">{entry.incomeName}</TableCell>
                     <TableCell className="text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy")}</TableCell>
                     <TableCell className="text-right font-mono font-medium">
-                      ${Number(entry.amount).toFixed(2)}
+                      ₺{Number(entry.amount).toLocaleString()}
                     </TableCell>
                     <TableCell>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-600">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete this income source?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will delete the master record and ALL future scheduled entries. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => entry.incomeId && handleDelete(entry.incomeId)} className="bg-red-600 hover:bg-red-700">
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-indigo-600"
+                          onClick={() => setLocation(`/income/add?edit=${entry.incomeId}`)}
+                        >
+                          <Plus className="w-4 h-4 rotate-45" /> {/* Using Plus rotated as a proxy for edit if Edit icon not imported */}
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-600">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this income source?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will delete the master record and ALL future scheduled entries. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => entry.incomeId && handleDelete(entry.incomeId)} className="bg-red-600 hover:bg-red-700">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
