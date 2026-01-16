@@ -74,14 +74,15 @@ export default function AddExpense() {
 
     createExpense({
       name,
-      amount: parseFloat(amount),
+      amount: String(amount),
       date: new Date(date).toISOString(), 
       isRecurring,
       frequency: isRecurring ? frequency : null,
-      entries: schedule.map(s => ({
+      monthlySchedule: schedule.map(s => ({
+        month: format(new Date(s.date), "yyyy-MM"),
         date: new Date(s.date).toISOString(),
-        amount: parseFloat(s.amount),
-        isPaid: false
+        amount: String(s.amount),
+        paid: false
       }))
     }, {
       onSuccess: () => {

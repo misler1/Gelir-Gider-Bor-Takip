@@ -75,14 +75,14 @@ export default function AddIncome() {
 
     createIncome({
       name,
-      baseAmount: amount,
+      baseAmount: String(amount),
       baseDate: new Date(date).toISOString(),
       isRecurring,
       frequency: isRecurring ? frequency : null,
       monthlySchedule: schedule.map(s => ({
         month: format(new Date(s.date), "yyyy-MM"),
         date: new Date(s.date).toISOString(),
-        amount: s.amount,
+        amount: String(s.amount),
         approved: false
       }))
     }, {
