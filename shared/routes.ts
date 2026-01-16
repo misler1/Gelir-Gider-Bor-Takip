@@ -2,10 +2,14 @@
 import { z } from 'zod';
 import { 
   insertIncomeSchema, 
+  insertIncomeEntrySchema,
   insertExpenseSchema, 
+  insertExpenseEntrySchema,
   insertBankSchema,
   incomes,
+  incomeEntries,
   expenses,
+  expenseEntries,
   banks
 } from './schema';
 
@@ -67,6 +71,24 @@ export const api = {
       },
     }
   },
+  incomeEntries: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/income-entries',
+      responses: {
+        200: z.array(z.custom<typeof incomeEntries.$inferSelect & { incomeName: string }>()),
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/income-entries/:id',
+      input: insertIncomeEntrySchema.partial(),
+      responses: {
+        200: z.custom<typeof incomeEntries.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
   expenses: {
     list: {
       method: 'GET' as const,
@@ -110,6 +132,24 @@ export const api = {
         404: errorSchemas.notFound,
       },
     }
+  },
+  expenseEntries: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/expense-entries',
+      responses: {
+        200: z.array(z.custom<typeof expenseEntries.$inferSelect & { expenseName: string }>()),
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/expense-entries/:id',
+      input: insertExpenseEntrySchema.partial(),
+      responses: {
+        200: z.custom<typeof expenseEntries.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
   },
   banks: {
     list: {

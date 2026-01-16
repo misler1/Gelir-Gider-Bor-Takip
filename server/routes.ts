@@ -59,6 +59,28 @@ export async function registerRoutes(
     res.sendStatus(204);
   });
 
+  // === INCOME ENTRIES ===
+  app.get(api.incomeEntries.list.path, async (req, res) => {
+    const entries = await storage.getIncomeEntries();
+    res.json(entries);
+  });
+
+  app.put(api.incomeEntries.update.path, async (req, res) => {
+    try {
+      const input = api.incomeEntries.update.input.parse(req.body);
+      const updated = await storage.updateIncomeEntry(Number(req.params.id), input);
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // === EXPENSES ===
   app.get(api.expenses.list.path, async (req, res) => {
     const expenses = await storage.getExpenses();
@@ -106,6 +128,28 @@ export async function registerRoutes(
   app.delete(api.expenses.delete.path, async (req, res) => {
     await storage.deleteExpense(Number(req.params.id));
     res.sendStatus(204);
+  });
+
+  // === EXPENSE ENTRIES ===
+  app.get(api.expenseEntries.list.path, async (req, res) => {
+    const entries = await storage.getExpenseEntries();
+    res.json(entries);
+  });
+
+  app.put(api.expenseEntries.update.path, async (req, res) => {
+    try {
+      const input = api.expenseEntries.update.input.parse(req.body);
+      const updated = await storage.updateExpenseEntry(Number(req.params.id), input);
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
   });
 
   // === BANKS ===

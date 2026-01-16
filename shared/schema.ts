@@ -19,6 +19,16 @@ export const incomes = pgTable("incomes", {
   }[]>().notNull().default([]),
 });
 
+// Income entries are derived from the schedule in the frontend
+// We can keep these for legacy or specifically for "Approved" state
+export const incomeEntries = pgTable("income_entries", {
+  id: serial("id").primaryKey(),
+  incomeId: integer("income_id").references(() => incomes.id, { onDelete: 'cascade' }),
+  date: timestamp("date").notNull(),
+  amount: text("amount").notNull(),
+  isReceived: boolean("is_received").default(false),
+});
+
 // === EXPENSE MODULE ===
 export const expenses = pgTable("expenses", {
   id: serial("id").primaryKey(),
@@ -33,6 +43,14 @@ export const expenses = pgTable("expenses", {
     date: string;
     paid: boolean;
   }[]>().notNull().default([]),
+});
+
+export const expenseEntries = pgTable("expense_entries", {
+  id: serial("id").primaryKey(),
+  expenseId: integer("expense_id").references(() => expenses.id, { onDelete: 'cascade' }),
+  date: timestamp("date").notNull(),
+  amount: text("amount").notNull(),
+  isPaid: boolean("is_paid").default(false),
 });
 
 // === BANKS & DEBTS MODULE ===
@@ -57,10 +75,19 @@ export const banks = pgTable("banks", {
 
 // === SCHEMAS ===
 export const insertIncomeSchema = createInsertSchema(incomes).omit({ id: true });
+export const insertIncomeEntrySchema = createInsertSchema(incomeEntries).omit({ id: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true });
+export const insertExpenseEntrySchema = createInsertSchema(expenseEntries).omit({ id: true });
 export const insertBankSchema = createInsertSchema(banks).omit({ id: true });
 
 // === TYPES ===
 export type Income = typeof incomes.$inferSelect;
+export type IncomeEntry = typeof incomeEntries.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
+export type ExpenseEntry = typeof expenseEntries.$inferSelect;
 export type Bank = typeof banks.$inferSelect;
+
+export type CreateIncomeRequest = z.infer<typeof insertIncomeSchema>;
+export type UpdateIncomeEntryRequest = Partial<z.infer<typeof insertIncomeEntrySchema>>;
+export type CreateExpenseRequest = z.infer<typeof insertExpenseSchema>;
+export type UpdateExpenseEntryRequest = Partial<z.infer<typeof insertExpenseEntrySchema>>;

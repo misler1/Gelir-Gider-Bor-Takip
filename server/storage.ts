@@ -41,27 +41,80 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createIncome(data: any): Promise<Income> {
-    const [newIncome] = await db.insert(incomes).values({
-      ...data,
-      baseDate: new Date(data.baseDate),
-      monthlySchedule: data.monthlySchedule || []
-    }).returning();
-    return newIncome;
+    return await db.transaction(async (tx) => {
+      const [newIncome] = await tx.insert(incomes).values({
+        ...data,
+        baseDate: new Date(data.baseDate),
+        monthlySchedule: data.monthlySchedule || []
+      }).returning();
+
+      // Create entries for each month in the schedule to satisfy useIncomeEntries
+      if (data.monthlySchedule && data.monthlySchedule.length > 0) {
+        await tx.insert(incomeEntries).values(
+          data.monthlySchedule.map((entry: any) => ({
+            incomeId: newIncome.id,
+            date: new Date(entry.date),
+            amount: entry.amount,
+            isReceived: entry.approved || false
+          }))
+        );
+      }
+
+      return newIncome;
+    });
   }
 
   async updateIncome(id: number, updates: any): Promise<Income> {
-    const [updated] = await db.update(incomes)
-      .set({
-        ...updates,
-        baseDate: updates.baseDate ? new Date(updates.baseDate) : undefined,
-      })
-      .where(eq(incomes.id, id))
-      .returning();
-    return updated;
+    return await db.transaction(async (tx) => {
+      const [updated] = await tx.update(incomes)
+        .set({
+          ...updates,
+          baseDate: updates.baseDate ? new Date(updates.baseDate) : undefined,
+        })
+        .where(eq(incomes.id, id))
+        .returning();
+
+      if (updates.monthlySchedule) {
+        // Sync entries
+        await tx.delete(incomeEntries).where(eq(incomeEntries.incomeId, id));
+        await tx.insert(incomeEntries).values(
+          updates.monthlySchedule.map((entry: any) => ({
+            incomeId: id,
+            date: new Date(entry.date),
+            amount: entry.amount,
+            isReceived: entry.approved || false
+          }))
+        );
+      }
+
+      return updated;
+    });
   }
 
   async deleteIncome(id: number): Promise<void> {
     await db.delete(incomes).where(eq(incomes.id, id));
+  }
+
+  async getIncomeEntries(): Promise<(IncomeEntry & { incomeName: string })[]> {
+    return await db.select({
+      id: incomeEntries.id,
+      incomeId: incomeEntries.incomeId,
+      date: incomeEntries.date,
+      amount: incomeEntries.amount,
+      isReceived: incomeEntries.isReceived,
+      incomeName: incomes.name
+    })
+    .from(incomeEntries)
+    .innerJoin(incomes, eq(incomeEntries.incomeId, incomes.id))
+    .orderBy(incomeEntries.date);
+  }
+
+  async updateIncomeEntry(id: number, updates: any): Promise<IncomeEntry> {
+    const [updated] = await db.update(incomeEntries)
+      .set(updates)
+      .where(eq(incomeEntries.id, id))
+      .returning();
+    return updated;
   }
 
   // === EXPENSE ===
@@ -75,27 +128,78 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createExpense(data: any): Promise<Expense> {
-    const [newExpense] = await db.insert(expenses).values({
-      ...data,
-      date: new Date(data.date),
-      monthlySchedule: data.monthlySchedule || []
-    }).returning();
-    return newExpense;
+    return await db.transaction(async (tx) => {
+      const [newExpense] = await tx.insert(expenses).values({
+        ...data,
+        date: new Date(data.date),
+        monthlySchedule: data.monthlySchedule || []
+      }).returning();
+
+      if (data.monthlySchedule && data.monthlySchedule.length > 0) {
+        await tx.insert(expenseEntries).values(
+          data.monthlySchedule.map((entry: any) => ({
+            expenseId: newExpense.id,
+            date: new Date(entry.date),
+            amount: entry.amount,
+            isPaid: entry.paid || false
+          }))
+        );
+      }
+
+      return newExpense;
+    });
   }
 
   async updateExpense(id: number, updates: any): Promise<Expense> {
-    const [updated] = await db.update(expenses)
-      .set({
-        ...updates,
-        date: updates.date ? new Date(updates.date) : undefined,
-      })
-      .where(eq(expenses.id, id))
-      .returning();
-    return updated;
+    return await db.transaction(async (tx) => {
+      const [updated] = await tx.update(expenses)
+        .set({
+          ...updates,
+          date: updates.date ? new Date(updates.date) : undefined,
+        })
+        .where(eq(expenses.id, id))
+        .returning();
+
+      if (updates.monthlySchedule) {
+        await tx.delete(expenseEntries).where(eq(expenseEntries.expenseId, id));
+        await tx.insert(expenseEntries).values(
+          updates.monthlySchedule.map((entry: any) => ({
+            expenseId: id,
+            date: new Date(entry.date),
+            amount: entry.amount,
+            isPaid: entry.paid || false
+          }))
+        );
+      }
+
+      return updated;
+    });
   }
 
   async deleteExpense(id: number): Promise<void> {
     await db.delete(expenses).where(eq(expenses.id, id));
+  }
+
+  async getExpenseEntries(): Promise<(ExpenseEntry & { expenseName: string })[]> {
+    return await db.select({
+      id: expenseEntries.id,
+      expenseId: expenseEntries.expenseId,
+      date: expenseEntries.date,
+      amount: expenseEntries.amount,
+      isPaid: expenseEntries.isPaid,
+      expenseName: expenses.name
+    })
+    .from(expenseEntries)
+    .innerJoin(expenses, eq(expenseEntries.expenseId, expenses.id))
+    .orderBy(expenseEntries.date);
+  }
+
+  async updateExpenseEntry(id: number, updates: any): Promise<ExpenseEntry> {
+    const [updated] = await db.update(expenseEntries)
+      .set(updates)
+      .where(eq(expenseEntries.id, id))
+      .returning();
+    return updated;
   }
 
   // === BANKS ===
