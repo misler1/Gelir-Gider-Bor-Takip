@@ -1,0 +1,110 @@
+The problem is NOT UI.
+The problem is DATA STORAGE.
+
+Recurring incomes, expenses, and bank debts with 24-month schedules
+are FAILING TO SAVE because the backend data model does NOT support arrays.
+
+--------------------------------------------------
+MANDATORY ACTION
+--------------------------------------------------
+
+Redesign the data models and storage logic.
+
+--------------------------------------------------
+INCOME DATA MODEL (REQUIRED)
+--------------------------------------------------
+
+Each income must store:
+
+{
+  id,
+  name,
+  isRecurring,
+  baseAmount,
+  baseDate,
+  monthlySchedule: [
+    {
+      month,
+      amount,
+      date,
+      approved
+    }
+  ]
+}
+
+The backend MUST accept and persist the monthlySchedule array.
+
+--------------------------------------------------
+EXPENSE DATA MODEL (REQUIRED)
+--------------------------------------------------
+
+Each expense must store:
+
+{
+  id,
+  name,
+  isRecurring,
+  baseAmount,
+  baseDate,
+  monthlySchedule: [
+    {
+      month,
+      amount,
+      date,
+      paid
+    }
+  ]
+}
+
+--------------------------------------------------
+BANK DEBT DATA MODEL (REQUIRED)
+--------------------------------------------------
+
+Each bank debt must store:
+
+{
+  id,
+  bankName,
+  debtType,
+  interestRate,
+  interestType,
+  minimumPayment,
+  totalDebt,
+  paymentPlan: [
+    {
+      month,
+      startingDebt,
+      interest,
+      payment,
+      remainingDebt
+    }
+  ]
+}
+
+--------------------------------------------------
+CRITICAL FIXES
+--------------------------------------------------
+
+• Backend must accept nested arrays
+• Saving must NOT fail silently
+• Return real error messages
+• Ensure CREATE and UPDATE both work
+• Do NOT ignore recurring schedules
+
+--------------------------------------------------
+EDIT BUTTON FIX
+--------------------------------------------------
+
+Add Edit buttons for incomes and expenses.
+
+Edit must:
+• Load existing data
+• Allow modifying monthlySchedule
+• Save updates correctly
+
+--------------------------------------------------
+FINAL RULE
+--------------------------------------------------
+
+If storage does not support arrays, FIX STORAGE FIRST.
+Do NOT touch UI until data persistence works.

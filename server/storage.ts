@@ -1,37 +1,32 @@
 
 import { db } from "./db";
 import { 
-  incomes, incomeEntries, expenses, expenseEntries, banks, bankPayments,
-  type Income, type IncomeEntry, type Expense, type ExpenseEntry, type Bank, type BankPayment,
-  type CreateIncomeRequest, type CreateExpenseRequest, type CreateBankRequest,
-  type UpdateIncomeEntryRequest, type UpdateExpenseEntryRequest
+  incomes, expenses, banks,
+  type Income, type Expense, type Bank,
 } from "@shared/schema";
-import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Income
   getIncomes(): Promise<Income[]>;
-  createIncome(income: CreateIncomeRequest): Promise<Income>;
+  getIncome(id: number): Promise<Income | undefined>;
+  createIncome(income: any): Promise<Income>;
+  updateIncome(id: number, updates: any): Promise<Income>;
   deleteIncome(id: number): Promise<void>;
-  getIncomeEntries(month?: string, startDate?: Date, endDate?: Date): Promise<(IncomeEntry & { incomeName: string })[]>;
-  updateIncomeEntry(id: number, updates: UpdateIncomeEntryRequest): Promise<IncomeEntry>;
 
   // Expense
   getExpenses(): Promise<Expense[]>;
-  createExpense(expense: CreateExpenseRequest): Promise<Expense>;
+  getExpense(id: number): Promise<Expense | undefined>;
+  createExpense(expense: any): Promise<Expense>;
+  updateExpense(id: number, updates: any): Promise<Expense>;
   deleteExpense(id: number): Promise<void>;
-  getExpenseEntries(month?: string, startDate?: Date, endDate?: Date): Promise<(ExpenseEntry & { expenseName: string })[]>;
-  updateExpenseEntry(id: number, updates: UpdateExpenseEntryRequest): Promise<ExpenseEntry>;
 
   // Banks
   getBanks(): Promise<Bank[]>;
-  createBank(bank: CreateBankRequest): Promise<Bank>;
-  updateBank(id: number, updates: Partial<CreateBankRequest>): Promise<Bank>;
+  getBank(id: number): Promise<Bank | undefined>;
+  createBank(bank: any): Promise<Bank>;
+  updateBank(id: number, updates: any): Promise<Bank>;
   deleteBank(id: number): Promise<void>;
-  
-  // Bank Payments
-  getBankPayments(bankId?: number): Promise<BankPayment[]>;
-  updateBankPayment(id: number, updates: Partial<BankPayment>): Promise<BankPayment>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -40,52 +35,33 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(incomes);
   }
 
-  async createIncome(req: CreateIncomeRequest): Promise<Income> {
-    const { entries, ...incomeData } = req;
-    
-    // Transaction to create income and its entries
-    return await db.transaction(async (tx) => {
-      const [newIncome] = await tx.insert(incomes).values(incomeData).returning();
-      
-      if (entries.length > 0) {
-        await tx.insert(incomeEntries).values(
-          entries.map(e => ({ ...e, incomeId: newIncome.id }))
-        );
-      }
-      
-      return newIncome;
-    });
+  async getIncome(id: number): Promise<Income | undefined> {
+    const [income] = await db.select().from(incomes).where(eq(incomes.id, id));
+    return income;
+  }
+
+  async createIncome(data: any): Promise<Income> {
+    const [newIncome] = await db.insert(incomes).values({
+      ...data,
+      baseDate: new Date(data.baseDate),
+      monthlySchedule: data.monthlySchedule || []
+    }).returning();
+    return newIncome;
+  }
+
+  async updateIncome(id: number, updates: any): Promise<Income> {
+    const [updated] = await db.update(incomes)
+      .set({
+        ...updates,
+        baseDate: updates.baseDate ? new Date(updates.baseDate) : undefined,
+      })
+      .where(eq(incomes.id, id))
+      .returning();
+    return updated;
   }
 
   async deleteIncome(id: number): Promise<void> {
     await db.delete(incomes).where(eq(incomes.id, id));
-  }
-
-  async getIncomeEntries(month?: string, startDate?: Date, endDate?: Date): Promise<(IncomeEntry & { incomeName: string })[]> {
-    let query = db.select({
-      id: incomeEntries.id,
-      incomeId: incomeEntries.incomeId,
-      date: incomeEntries.date,
-      amount: incomeEntries.amount,
-      isReceived: incomeEntries.isReceived,
-      incomeName: incomes.name
-    })
-    .from(incomeEntries)
-    .innerJoin(incomes, eq(incomeEntries.incomeId, incomes.id));
-
-    if (startDate && endDate) {
-      query.where(and(gte(incomeEntries.date, startDate), lte(incomeEntries.date, endDate)));
-    }
-
-    return await query.orderBy(incomeEntries.date);
-  }
-
-  async updateIncomeEntry(id: number, updates: UpdateIncomeEntryRequest): Promise<IncomeEntry> {
-    const [updated] = await db.update(incomeEntries)
-      .set(updates)
-      .where(eq(incomeEntries.id, id))
-      .returning();
-    return updated;
   }
 
   // === EXPENSE ===
@@ -93,51 +69,33 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(expenses);
   }
 
-  async createExpense(req: CreateExpenseRequest): Promise<Expense> {
-    const { entries, ...expenseData } = req;
-    
-    return await db.transaction(async (tx) => {
-      const [newExpense] = await tx.insert(expenses).values(expenseData).returning();
-      
-      if (entries.length > 0) {
-        await tx.insert(expenseEntries).values(
-          entries.map(e => ({ ...e, expenseId: newExpense.id }))
-        );
-      }
-      
-      return newExpense;
-    });
+  async getExpense(id: number): Promise<Expense | undefined> {
+    const [expense] = await db.select().from(expenses).where(eq(expenses.id, id));
+    return expense;
+  }
+
+  async createExpense(data: any): Promise<Expense> {
+    const [newExpense] = await db.insert(expenses).values({
+      ...data,
+      date: new Date(data.date),
+      monthlySchedule: data.monthlySchedule || []
+    }).returning();
+    return newExpense;
+  }
+
+  async updateExpense(id: number, updates: any): Promise<Expense> {
+    const [updated] = await db.update(expenses)
+      .set({
+        ...updates,
+        date: updates.date ? new Date(updates.date) : undefined,
+      })
+      .where(eq(expenses.id, id))
+      .returning();
+    return updated;
   }
 
   async deleteExpense(id: number): Promise<void> {
     await db.delete(expenses).where(eq(expenses.id, id));
-  }
-
-  async getExpenseEntries(month?: string, startDate?: Date, endDate?: Date): Promise<(ExpenseEntry & { expenseName: string })[]> {
-    let query = db.select({
-      id: expenseEntries.id,
-      expenseId: expenseEntries.expenseId,
-      date: expenseEntries.date,
-      amount: expenseEntries.amount,
-      isPaid: expenseEntries.isPaid,
-      expenseName: expenses.name
-    })
-    .from(expenseEntries)
-    .innerJoin(expenses, eq(expenseEntries.expenseId, expenses.id));
-
-    if (startDate && endDate) {
-      query.where(and(gte(expenseEntries.date, startDate), lte(expenseEntries.date, endDate)));
-    }
-
-    return await query.orderBy(expenseEntries.date);
-  }
-
-  async updateExpenseEntry(id: number, updates: UpdateExpenseEntryRequest): Promise<ExpenseEntry> {
-    const [updated] = await db.update(expenseEntries)
-      .set(updates)
-      .where(eq(expenseEntries.id, id))
-      .returning();
-    return updated;
   }
 
   // === BANKS ===
@@ -145,12 +103,20 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(banks);
   }
 
-  async createBank(bank: CreateBankRequest): Promise<Bank> {
-    const [newBank] = await db.insert(banks).values(bank).returning();
+  async getBank(id: number): Promise<Bank | undefined> {
+    const [bank] = await db.select().from(banks).where(eq(banks.id, id));
+    return bank;
+  }
+
+  async createBank(data: any): Promise<Bank> {
+    const [newBank] = await db.insert(banks).values({
+      ...data,
+      paymentPlan: data.paymentPlan || []
+    }).returning();
     return newBank;
   }
 
-  async updateBank(id: number, updates: Partial<CreateBankRequest>): Promise<Bank> {
+  async updateBank(id: number, updates: any): Promise<Bank> {
     const [updated] = await db.update(banks)
       .set(updates)
       .where(eq(banks.id, id))
@@ -160,21 +126,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBank(id: number): Promise<void> {
     await db.delete(banks).where(eq(banks.id, id));
-  }
-
-  async getBankPayments(bankId?: number): Promise<BankPayment[]> {
-    if (bankId) {
-      return await db.select().from(bankPayments).where(eq(bankPayments.bankId, bankId));
-    }
-    return await db.select().from(bankPayments);
-  }
-
-  async updateBankPayment(id: number, updates: Partial<BankPayment>): Promise<BankPayment> {
-    const [updated] = await db.update(bankPayments)
-      .set(updates)
-      .where(eq(bankPayments.id, id))
-      .returning();
-    return updated;
   }
 }
 

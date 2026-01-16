@@ -2,17 +2,11 @@
 import { z } from 'zod';
 import { 
   insertIncomeSchema, 
-  insertIncomeEntrySchema, 
   insertExpenseSchema, 
-  insertExpenseEntrySchema, 
   insertBankSchema,
-  insertBankPaymentSchema,
   incomes,
-  incomeEntries,
   expenses,
-  expenseEntries,
-  banks,
-  bankPayments
+  banks
 } from './schema';
 
 export const errorSchemas = {
@@ -37,15 +31,31 @@ export const api = {
         200: z.array(z.custom<typeof incomes.$inferSelect>()),
       },
     },
+    get: {
+      method: 'GET' as const,
+      path: '/api/incomes/:id',
+      responses: {
+        200: z.custom<typeof incomes.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
     create: {
       method: 'POST' as const,
       path: '/api/incomes',
-      input: insertIncomeSchema.extend({
-        entries: z.array(insertIncomeEntrySchema.omit({ incomeId: true }))
-      }),
+      input: insertIncomeSchema,
       responses: {
         201: z.custom<typeof incomes.$inferSelect>(),
         400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/incomes/:id',
+      input: insertIncomeSchema.partial(),
+      responses: {
+        200: z.custom<typeof incomes.$inferSelect>(),
+        400: errorSchemas.validation,
+        404: errorSchemas.notFound,
       },
     },
     delete: {
@@ -57,29 +67,6 @@ export const api = {
       },
     }
   },
-  incomeEntries: {
-    list: {
-      method: 'GET' as const,
-      path: '/api/income-entries',
-      input: z.object({
-        month: z.string().optional(), // 'YYYY-MM'
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
-      }).optional(),
-      responses: {
-        200: z.array(z.custom<typeof incomeEntries.$inferSelect & { incomeName: string }>()),
-      },
-    },
-    update: {
-      method: 'PUT' as const,
-      path: '/api/income-entries/:id',
-      input: insertIncomeEntrySchema.partial(),
-      responses: {
-        200: z.custom<typeof incomeEntries.$inferSelect>(),
-        404: errorSchemas.notFound,
-      },
-    },
-  },
   expenses: {
     list: {
       method: 'GET' as const,
@@ -88,15 +75,31 @@ export const api = {
         200: z.array(z.custom<typeof expenses.$inferSelect>()),
       },
     },
+    get: {
+      method: 'GET' as const,
+      path: '/api/expenses/:id',
+      responses: {
+        200: z.custom<typeof expenses.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
     create: {
       method: 'POST' as const,
       path: '/api/expenses',
-      input: insertExpenseSchema.extend({
-        entries: z.array(insertExpenseEntrySchema.omit({ expenseId: true }))
-      }),
+      input: insertExpenseSchema,
       responses: {
         201: z.custom<typeof expenses.$inferSelect>(),
         400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/expenses/:id',
+      input: insertExpenseSchema.partial(),
+      responses: {
+        200: z.custom<typeof expenses.$inferSelect>(),
+        400: errorSchemas.validation,
+        404: errorSchemas.notFound,
       },
     },
     delete: {
@@ -108,35 +111,20 @@ export const api = {
       },
     }
   },
-  expenseEntries: {
-    list: {
-      method: 'GET' as const,
-      path: '/api/expense-entries',
-      input: z.object({
-        month: z.string().optional(), // 'YYYY-MM'
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
-      }).optional(),
-      responses: {
-        200: z.array(z.custom<typeof expenseEntries.$inferSelect & { expenseName: string }>()),
-      },
-    },
-    update: {
-      method: 'PUT' as const,
-      path: '/api/expense-entries/:id',
-      input: insertExpenseEntrySchema.partial(),
-      responses: {
-        200: z.custom<typeof expenseEntries.$inferSelect>(),
-        404: errorSchemas.notFound,
-      },
-    },
-  },
   banks: {
     list: {
       method: 'GET' as const,
       path: '/api/banks',
       responses: {
         200: z.array(z.custom<typeof banks.$inferSelect>()),
+      },
+    },
+    get: {
+      method: 'GET' as const,
+      path: '/api/banks/:id',
+      responses: {
+        200: z.custom<typeof banks.$inferSelect>(),
+        404: errorSchemas.notFound,
       },
     },
     create: {
@@ -154,6 +142,7 @@ export const api = {
       input: insertBankSchema.partial(),
       responses: {
         200: z.custom<typeof banks.$inferSelect>(),
+        400: errorSchemas.validation,
         404: errorSchemas.notFound,
       },
     },
@@ -166,27 +155,6 @@ export const api = {
       },
     },
   },
-  bankPayments: {
-    list: {
-      method: 'GET' as const,
-      path: '/api/bank-payments',
-      input: z.object({
-        bankId: z.coerce.number().optional(),
-      }).optional(),
-      responses: {
-        200: z.array(z.custom<typeof bankPayments.$inferSelect>()),
-      },
-    },
-    update: {
-      method: 'PUT' as const,
-      path: '/api/bank-payments/:id',
-      input: insertBankPaymentSchema.partial(),
-      responses: {
-        200: z.custom<typeof bankPayments.$inferSelect>(),
-        404: errorSchemas.notFound,
-      },
-    }
-  }
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
