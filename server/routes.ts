@@ -28,9 +28,11 @@ export async function registerRoutes(
       const body = {
         ...req.body,
         baseAmount: String(req.body.baseAmount),
+        baseDate: new Date(req.body.baseDate),
         monthlySchedule: req.body.monthlySchedule?.map((s: any) => ({
           ...s,
-          amount: String(s.amount)
+          amount: String(s.amount),
+          date: new Date(s.date).toISOString()
         })) || []
       };
       const input = api.incomes.create.input.parse(body);
@@ -49,7 +51,17 @@ export async function registerRoutes(
 
   app.put(api.incomes.update.path, async (req, res) => {
     try {
-      const input = api.incomes.update.input.parse(req.body);
+      const body = {
+        ...req.body,
+        baseAmount: req.body.baseAmount ? String(req.body.baseAmount) : undefined,
+        baseDate: req.body.baseDate ? new Date(req.body.baseDate) : undefined,
+        monthlySchedule: req.body.monthlySchedule?.map((s: any) => ({
+          ...s,
+          amount: String(s.amount),
+          date: new Date(s.date).toISOString()
+        }))
+      };
+      const input = api.incomes.update.input.parse(body);
       const updated = await storage.updateIncome(Number(req.params.id), input);
       res.json(updated);
     } catch (err) {
@@ -104,7 +116,17 @@ export async function registerRoutes(
 
   app.post(api.expenses.create.path, async (req, res) => {
     try {
-      const input = api.expenses.create.input.parse(req.body);
+      const body = {
+        ...req.body,
+        amount: String(req.body.amount),
+        date: new Date(req.body.date),
+        monthlySchedule: req.body.monthlySchedule?.map((s: any) => ({
+          ...s,
+          amount: String(s.amount),
+          date: new Date(s.date).toISOString()
+        })) || []
+      };
+      const input = api.expenses.create.input.parse(body);
       const expense = await storage.createExpense(input);
       res.status(201).json(expense);
     } catch (err) {
@@ -120,7 +142,17 @@ export async function registerRoutes(
 
   app.put(api.expenses.update.path, async (req, res) => {
     try {
-      const input = api.expenses.update.input.parse(req.body);
+      const body = {
+        ...req.body,
+        amount: req.body.amount ? String(req.body.amount) : undefined,
+        date: req.body.date ? new Date(req.body.date) : undefined,
+        monthlySchedule: req.body.monthlySchedule?.map((s: any) => ({
+          ...s,
+          amount: String(s.amount),
+          date: new Date(s.date).toISOString()
+        }))
+      };
+      const input = api.expenses.update.input.parse(body);
       const updated = await storage.updateExpense(Number(req.params.id), input);
       res.json(updated);
     } catch (err) {
@@ -175,7 +207,13 @@ export async function registerRoutes(
 
   app.post(api.banks.create.path, async (req, res) => {
     try {
-      const input = api.banks.create.input.parse(req.body);
+      const body = {
+        ...req.body,
+        totalDebt: String(req.body.totalDebt),
+        interestRate: String(req.body.interestRate),
+        minPaymentAmount: String(req.body.minPaymentAmount)
+      };
+      const input = api.banks.create.input.parse(body);
       const bank = await storage.createBank(input);
       res.status(201).json(bank);
     } catch (err) {
