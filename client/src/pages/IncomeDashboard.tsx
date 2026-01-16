@@ -33,7 +33,8 @@ export default function IncomeDashboard() {
   const startDate = format(startOfMonth(new Date(selectedMonth)), "yyyy-MM-dd");
   const endDate = format(endOfMonth(new Date(selectedMonth)), "yyyy-MM-dd");
 
-  const { data: entries, isLoading: isLoadingEntries } = useIncomeEntries({ month: selectedMonth });
+  const { data: allEntries, isLoading: isLoadingEntries } = useIncomeEntries();
+  const entries = allEntries?.filter(e => format(new Date(e.date), "yyyy-MM") === selectedMonth);
   const { mutate: updateEntry } = useUpdateIncomeEntry();
   const { mutate: deleteIncome } = useDeleteIncome();
 

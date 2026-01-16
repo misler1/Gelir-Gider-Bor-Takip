@@ -30,7 +30,8 @@ export default function ExpenseDashboard() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
   const { toast } = useToast();
 
-  const { data: entries, isLoading: isLoadingEntries } = useExpenseEntries({ month: selectedMonth });
+  const { data: allEntries, isLoading: isLoadingEntries } = useExpenseEntries();
+  const entries = allEntries?.filter(e => format(new Date(e.date), "yyyy-MM") === selectedMonth);
   const { mutate: updateEntry } = useUpdateExpenseEntry();
   const { mutate: deleteExpense } = useDeleteExpense();
 
