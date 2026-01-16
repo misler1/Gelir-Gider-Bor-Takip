@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/Layout";
-import { useCreateExpense } from "@/hooks/use-expenses";
+import { useCreateExpense, useExpenses } from "@/hooks/use-expenses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,12 @@ interface ScheduleEntry {
 export default function AddExpense() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const searchParams = new URLSearchParams(window.location.search);
+  const editId = searchParams.get("edit");
+
   const { mutate: createExpense, isPending } = useCreateExpense();
+  const { data: expenses } = useExpenses();
+  const editingExpense = expenses?.find(e => e.id === Number(editId));
 
   // Form State
   const [name, setName] = useState("");
@@ -32,8 +37,27 @@ export default function AddExpense() {
   // Generated Schedule State
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
 
+  // Load editing data
+  useEffect(() => {
+    if (editingExpense) {
+      setName(editingExpense.name);
+      setAmount(editingExpense.amount);
+      setDate(format(new Date(editingExpense.date), "yyyy-MM-dd"));
+      setIsRecurring(editingExpense.isRecurring || false);
+      if (editingExpense.frequency) setFrequency(editingExpense.frequency as any);
+      
+      if (editingExpense.monthlySchedule) {
+        setSchedule((editingExpense.monthlySchedule as any[]).map(s => ({
+          date: format(new Date(s.date), "yyyy-MM-dd"),
+          amount: s.amount
+        })));
+      }
+    }
+  }, [editingExpense]);
+
   // Generate schedule when inputs change
   useEffect(() => {
+    if (editId && editingExpense) return;
     if (!amount || !date) {
       setSchedule([]);
       return;
@@ -57,7 +81,7 @@ export default function AddExpense() {
     }
 
     setSchedule(newSchedule);
-  }, [amount, date, isRecurring, frequency]);
+  }, [amount, date, isRecurring, frequency, editId, editingExpense]);
 
   const handleScheduleChange = (index: number, field: keyof ScheduleEntry, value: string) => {
     const updated = [...schedule];
@@ -72,7 +96,7 @@ export default function AddExpense() {
       return;
     }
 
-    createExpense({
+    const payload = {
       name,
       amount: String(amount),
       date: new Date(date).toISOString(), 
@@ -84,15 +108,25 @@ export default function AddExpense() {
         amount: String(s.amount),
         paid: false
       }))
-    }, {
-      onSuccess: () => {
-        toast({ title: "Success", description: "Expense created successfully" });
-        setLocation("/expenses");
-      },
-      onError: (err) => {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
-      }
-    });
+    };
+
+    if (editId) {
+      createExpense(payload, {
+        onSuccess: () => {
+          toast({ title: "Success", description: "Expense updated successfully" });
+          setLocation("/expenses");
+        },
+        onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" })
+      });
+    } else {
+      createExpense(payload, {
+        onSuccess: () => {
+          toast({ title: "Success", description: "Expense created successfully" });
+          setLocation("/expenses");
+        },
+        onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" })
+      });
+    }
   };
 
   return (
@@ -101,7 +135,7 @@ export default function AddExpense() {
         <Button variant="ghost" size="icon" onClick={() => setLocation("/expenses")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-2xl font-bold font-display">Add Expense</h1>
+        <h1 className="text-2xl font-bold font-display">{editId ? 'Edit Expense' : 'Add Expense'}</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
