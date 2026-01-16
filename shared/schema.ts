@@ -1,18 +1,92 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+
+import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+// === INCOME MODULE ===
+export const incomes = pgTable("incomes", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  date: timestamp("date").notNull(),
+  isRecurring: boolean("is_recurring").default(false),
+  frequency: text("frequency"), // 'weekly', 'monthly', 'yearly'
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const incomeEntries = pgTable("income_entries", {
+  id: serial("id").primaryKey(),
+  incomeId: integer("income_id").references(() => incomes.id, { onDelete: 'cascade' }),
+  date: timestamp("date").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  isReceived: boolean("is_received").default(false),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+// === EXPENSE MODULE ===
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  date: timestamp("date").notNull(),
+  isRecurring: boolean("is_recurring").default(false),
+  frequency: text("frequency"),
+});
+
+export const expenseEntries = pgTable("expense_entries", {
+  id: serial("id").primaryKey(),
+  expenseId: integer("expense_id").references(() => expenses.id, { onDelete: 'cascade' }),
+  date: timestamp("date").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  isPaid: boolean("is_paid").default(false),
+});
+
+// === BANKS & DEBTS MODULE ===
+export const banks = pgTable("banks", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  debtType: text("debt_type").notNull(), // 'Credit Card', 'Overdraft', 'KMH', 'Flexible Account'
+  totalDebt: decimal("total_debt", { precision: 10, scale: 2 }).notNull(),
+  interestRate: decimal("interest_rate", { precision: 5, scale: 2 }).notNull(),
+  interestType: text("interest_type").notNull(), // 'Daily', 'Monthly'
+  minPaymentAmount: decimal("min_payment_amount", { precision: 10, scale: 2 }).notNull(),
+  paymentDueDay: integer("payment_due_day").default(5),
+  isActive: boolean("is_active").default(true),
+});
+
+// To track actual payments made to banks
+export const bankPayments = pgTable("bank_payments", {
+  id: serial("id").primaryKey(),
+  bankId: integer("bank_id").references(() => banks.id, { onDelete: 'cascade' }),
+  date: timestamp("date").notNull(), // The month this payment is for
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  isCompleted: boolean("is_completed").default(false),
+});
+
+// === SCHEMAS ===
+export const insertIncomeSchema = createInsertSchema(incomes).omit({ id: true });
+export const insertIncomeEntrySchema = createInsertSchema(incomeEntries).omit({ id: true });
+export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true });
+export const insertExpenseEntrySchema = createInsertSchema(expenseEntries).omit({ id: true });
+export const insertBankSchema = createInsertSchema(banks).omit({ id: true });
+export const insertBankPaymentSchema = createInsertSchema(bankPayments).omit({ id: true });
+
+// === TYPES ===
+export type Income = typeof incomes.$inferSelect;
+export type IncomeEntry = typeof incomeEntries.$inferSelect;
+export type Expense = typeof expenses.$inferSelect;
+export type ExpenseEntry = typeof expenseEntries.$inferSelect;
+export type Bank = typeof banks.$inferSelect;
+export type BankPayment = typeof bankPayments.$inferSelect;
+
+// Request Types
+export type CreateIncomeRequest = z.infer<typeof insertIncomeSchema> & {
+  entries: z.infer<typeof insertIncomeEntrySchema>[];
+};
+
+export type CreateExpenseRequest = z.infer<typeof insertExpenseSchema> & {
+  entries: z.infer<typeof insertExpenseEntrySchema>[];
+};
+
+export type CreateBankRequest = z.infer<typeof insertBankSchema>;
+
+export type UpdateIncomeEntryRequest = Partial<z.infer<typeof insertIncomeEntrySchema>>;
+export type UpdateExpenseEntryRequest = Partial<z.infer<typeof insertExpenseEntrySchema>>;
