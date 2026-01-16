@@ -1,8 +1,8 @@
 
 import { db } from "./db";
 import { 
-  incomes, expenses, banks,
-  type Income, type Expense, type Bank,
+  incomes, incomeEntries, expenses, expenseEntries, banks,
+  type Income, type IncomeEntry, type Expense, type ExpenseEntry, type Bank,
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
