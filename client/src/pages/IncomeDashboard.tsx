@@ -65,9 +65,10 @@ export default function IncomeDashboard() {
     return allEntries.filter((e) => {
       // Backend ISO string formatında tarih gönderiyor (örn: 2026-02-05T00:00:00.000Z)
       // selectedMonth formatı ise yyyy-MM (örn: 2026-02)
-      // En güvenli yöntem: Metin olarak tarih string'i içinde selectedMonth aramaktır
+      // İlk 7 karakter karşılaştırması en kesin yöntemdir.
+      if (!e.date) return false;
       const dateStr = String(e.date);
-      return dateStr.includes(selectedMonth);
+      return dateStr.substring(0, 7) === selectedMonth;
     });
   }, [allEntries, selectedMonth]);
 
