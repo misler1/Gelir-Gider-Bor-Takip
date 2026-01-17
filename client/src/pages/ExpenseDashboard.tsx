@@ -35,7 +35,7 @@ export default function ExpenseDashboard() {
   // Normalize dates for filtering to handle timezone offsets
   const entries = allEntries?.filter(e => {
     const entryDate = new Date(e.date);
-    const entryMonth = entryDate.getUTCFullYear() + "-" + String(entryDate.getUTCMonth() + 1).padStart(2, '0');
+    const entryMonth = entryDate.getFullYear() + "-" + String(entryDate.getMonth() + 1).padStart(2, '0');
     return entryMonth === selectedMonth;
   });
   const { mutate: updateEntry } = useUpdateExpenseEntry();

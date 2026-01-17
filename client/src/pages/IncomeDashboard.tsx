@@ -64,7 +64,7 @@ export default function IncomeDashboard() {
   const filteredEntries = useMemo(() => {
     return allEntries.filter((e) => {
       const d = new Date(e.date);
-      const entryMonth = d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0");
+      const entryMonth = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
       return entryMonth === selectedMonth;
     });
   }, [allEntries, selectedMonth]);
