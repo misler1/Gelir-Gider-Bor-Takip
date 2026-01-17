@@ -27,7 +27,15 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function ExpenseDashboard() {
-  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    const day = now.getDate();
+    const displayDate = new Date(now);
+    if (day >= 6) {
+      displayDate.setMonth(displayDate.getMonth() + 1);
+    }
+    return format(displayDate, "yyyy-MM");
+  });
   const { toast } = useToast();
 
   const { data: allEntries, isLoading: isLoadingEntries } = useExpenseEntries();

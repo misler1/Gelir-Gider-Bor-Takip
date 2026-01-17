@@ -46,9 +46,15 @@ export default function IncomeDashboard() {
   const { toast } = useToast();
 
   /* -------------------- STATE -------------------- */
-  const [selectedMonth, setSelectedMonth] = useState(
-    format(new Date(), "yyyy-MM"),
-  );
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    const day = now.getDate();
+    const displayDate = new Date(now);
+    if (day >= 6) {
+      displayDate.setMonth(displayDate.getMonth() + 1);
+    }
+    return format(displayDate, "yyyy-MM");
+  });
 
   /* -------------------- DATA -------------------- */
   const { data: allEntries = [], isLoading: isLoadingEntries } = useIncomeEntries();
