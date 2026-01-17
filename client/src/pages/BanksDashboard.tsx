@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useBanks, useDeleteBank } from "@/hooks/use-banks";
 import { Layout } from "@/components/Layout";
-import { Plus, Landmark, Trash2, ExternalLink } from "lucide-react";
+import { useLocation } from "wouter";
+import { Plus, Landmark, Trash2, ExternalLink, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function BanksDashboard() {
+  const [_, setLocation] = useLocation();
   const { data: banks, isLoading } = useBanks();
   const { mutate: deleteBank } = useDeleteBank();
   const { toast } = useToast();
@@ -89,23 +91,33 @@ export default function BanksDashboard() {
                 </div>
               </CardContent>
               <CardFooter className="pt-2 flex justify-between border-t border-border/50 bg-muted/20">
-                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-red-600">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete {bank.name}?</AlertDialogTitle>
-                      <AlertDialogDescription>This will remove the bank and all payment history.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDelete(bank.id)} className="bg-red-600">Delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                 <div className="flex items-center gap-1">
+                   <Button
+                     variant="ghost"
+                     size="sm"
+                     className="text-muted-foreground hover:text-indigo-600"
+                     onClick={() => setLocation(`/banks/add?edit=${bank.id}`)}
+                   >
+                     <Edit2 className="w-4 h-4" />
+                   </Button>
+                   <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-red-600">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete {bank.name}?</AlertDialogTitle>
+                        <AlertDialogDescription>This will remove the bank and all payment history.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(bank.id)} className="bg-red-600">Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
 
                 <Link href={`/banks/${bank.id}/plan`}>
                   <Button variant="secondary" size="sm" className="group-hover:bg-indigo-600 group-hover:text-white transition-colors">

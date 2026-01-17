@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/Layout";
-import { useCreateBank } from "@/hooks/use-banks";
+import { useCreateBank, useBanks, useUpdateBank } from "@/hooks/use-banks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,15 @@ import { useToast } from "@/hooks/use-toast";
 export default function AddBank() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
-  const { mutate: createBank, isPending } = useCreateBank();
+  const searchParams = new URLSearchParams(window.location.search);
+  const editId = searchParams.get("edit");
+
+  const { mutate: createBank, isPending: isCreating } = useCreateBank();
+  const { mutate: updateBank, isPending: isUpdating } = useUpdateBank();
+  const isPending = isCreating || isUpdating;
+
+  const { data: banks } = useBanks();
+  const editingBank = banks?.find(b => b.id === Number(editId));
 
   // Form State
   const [name, setName] = useState("");
@@ -26,6 +34,20 @@ export default function AddBank() {
   const [paymentDueDay, setPaymentDueDay] = useState("5");
   const [isActive, setIsActive] = useState(true);
 
+  // Load editing data
+  useState(() => {
+    if (editingBank) {
+      setName(editingBank.name);
+      setDebtType(editingBank.debtType);
+      setTotalDebt(editingBank.totalDebt);
+      setInterestRate(editingBank.interestRate);
+      setInterestType(editingBank.interestType);
+      setMinPayment(editingBank.minPaymentAmount);
+      setPaymentDueDay(String(editingBank.paymentDueDay));
+      setIsActive(editingBank.isActive || false);
+    }
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !totalDebt || !interestRate || !minPayment) {
@@ -33,21 +55,33 @@ export default function AddBank() {
       return;
     }
 
-    createBank({
+    const payload = {
       name,
       debtType,
-      totalDebt: parseFloat(totalDebt),
-      interestRate: parseFloat(interestRate),
+      totalDebt,
+      interestRate,
       interestType,
-      minPaymentAmount: parseFloat(minPayment),
+      minPaymentAmount: minPayment,
       paymentDueDay: parseInt(paymentDueDay),
       isActive
-    }, {
-      onSuccess: () => {
-        toast({ title: "Bank Added" });
-        setLocation("/banks");
-      }
-    });
+    };
+
+    if (editId) {
+      updateBank({ id: Number(editId), ...payload }, {
+        onSuccess: () => {
+          toast({ title: "Bank Updated" });
+          setLocation("/banks");
+        },
+        onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" })
+      });
+    } else {
+      createBank(payload, {
+        onSuccess: () => {
+          toast({ title: "Bank Added" });
+          setLocation("/banks");
+        }
+      });
+    }
   };
 
   return (
@@ -56,7 +90,7 @@ export default function AddBank() {
         <Button variant="ghost" size="icon" onClick={() => setLocation("/banks")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-2xl font-bold font-display">Add Bank / Debt</h1>
+        <h1 className="text-2xl font-bold font-display">{editId ? 'Edit Bank / Debt' : 'Add Bank / Debt'}</h1>
       </div>
 
       <div className="max-w-2xl mx-auto">
