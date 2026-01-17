@@ -65,7 +65,13 @@ export default function IncomeDashboard() {
     return allEntries.filter((e) => {
       // Backend ISO string formatında tarih gönderiyor (örn: 2026-02-05T00:00:00.000Z)
       // selectedMonth formatı ise yyyy-MM (örn: 2026-02)
-      return typeof e.date === "string" && e.date.startsWith(selectedMonth);
+      // Tarih nesnesi üzerinden ISO string'e çevirip kontrol ederek daha güvenli hale getiriyoruz
+      try {
+        const dateStr = e.date instanceof Date ? e.date.toISOString() : new Date(e.date).toISOString();
+        return dateStr.startsWith(selectedMonth);
+      } catch (err) {
+        return false;
+      }
     });
   }, [allEntries, selectedMonth]);
 
