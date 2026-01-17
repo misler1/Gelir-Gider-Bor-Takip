@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/Layout";
-import { useCreateExpense, useExpenses } from "@/hooks/use-expenses";
+import { useCreateExpense, useUpdateExpense, useExpenses } from "@/hooks/use-expenses";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,9 @@ export default function AddExpense() {
   const searchParams = new URLSearchParams(window.location.search);
   const editId = searchParams.get("edit");
 
-  const { mutate: createExpense, isPending } = useCreateExpense();
+  const { mutate: createExpense, isPending: isCreating } = useCreateExpense();
+  const { mutate: updateExpense, isPending: isUpdating } = useUpdateExpense();
+  const isPending = isCreating || isUpdating;
   const { data: expenses } = useExpenses();
   const editingExpense = expenses?.find(e => e.id === Number(editId));
 
@@ -111,7 +113,7 @@ export default function AddExpense() {
     };
 
     if (editId) {
-      createExpense(payload, {
+      updateExpense({ id: Number(editId), ...payload }, {
         onSuccess: () => {
           toast({ title: "Success", description: "Expense updated successfully" });
           setLocation("/expenses");

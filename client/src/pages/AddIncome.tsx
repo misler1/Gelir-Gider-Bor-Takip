@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/Layout";
-import { useCreateIncome, useIncomes } from "@/hooks/use-incomes";
+import { useCreateIncome, useUpdateIncome, useIncomes } from "@/hooks/use-incomes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,9 @@ export default function AddIncome() {
   const searchParams = new URLSearchParams(window.location.search);
   const editId = searchParams.get("edit");
   
-  const { mutate: createIncome, isPending } = useCreateIncome();
+  const { mutate: createIncome, isPending: isCreating } = useCreateIncome();
+  const { mutate: updateIncome, isPending: isUpdating } = useUpdateIncome();
+  const isPending = isCreating || isUpdating;
   const { data: incomes } = useIncomes();
   const editingIncome = incomes?.find(i => i.id === Number(editId));
 
@@ -111,9 +113,7 @@ export default function AddIncome() {
     };
 
     if (editId) {
-      // In a real app we'd use useUpdateIncome, but here we'll reuse create logic for simplicity
-      // or implement the update hook if available. For now, we'll keep it as create-or-replace
-      createIncome(payload, {
+      updateIncome({ id: Number(editId), ...payload }, {
         onSuccess: () => {
           toast({ title: "Success", description: "Income updated successfully" });
           setLocation("/income");
