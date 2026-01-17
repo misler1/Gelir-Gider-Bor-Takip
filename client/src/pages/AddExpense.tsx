@@ -101,7 +101,7 @@ export default function AddExpense() {
     const payload = {
       name,
       amount: String(amount),
-      date: new Date(date).toISOString(), 
+      date: new Date(date), 
       isRecurring,
       frequency: isRecurring ? frequency : null,
       monthlySchedule: schedule.map(s => ({
@@ -118,7 +118,7 @@ export default function AddExpense() {
           toast({ title: "Success", description: "Expense updated successfully" });
           setLocation("/expenses");
         },
-        onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" })
+        onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" })
       });
     } else {
       createExpense(payload, {
@@ -126,7 +126,7 @@ export default function AddExpense() {
           toast({ title: "Success", description: "Expense created successfully" });
           setLocation("/expenses");
         },
-        onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" })
+        onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" })
       });
     }
   };

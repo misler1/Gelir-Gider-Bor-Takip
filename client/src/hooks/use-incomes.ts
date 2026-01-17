@@ -48,6 +48,26 @@ export function useDeleteIncome() {
   });
 }
 
+export function useUpdateIncome() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & CreateIncomeRequest) => {
+      const url = buildUrl(api.incomes.update.path, { id });
+      const res = await fetch(url, {
+        method: api.incomes.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update income");
+      return api.incomes.update.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.incomes.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.incomeEntries.list.path] });
+    },
+  });
+}
+
 // === INCOME ENTRIES (Monthly instances) ===
 export function useIncomeEntries(params?: { month?: string; startDate?: string; endDate?: string }) {
   const queryKey = [api.incomeEntries.list.path, params?.month, params?.startDate, params?.endDate].filter(Boolean);

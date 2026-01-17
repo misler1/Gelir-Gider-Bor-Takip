@@ -101,7 +101,7 @@ export default function AddIncome() {
     const payload = {
       name,
       baseAmount: String(amount),
-      baseDate: new Date(date).toISOString(),
+      baseDate: new Date(date),
       isRecurring,
       frequency: isRecurring ? frequency : null,
       monthlySchedule: schedule.map(s => ({
@@ -118,7 +118,7 @@ export default function AddIncome() {
           toast({ title: "Success", description: "Income updated successfully" });
           setLocation("/income");
         },
-        onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" })
+        onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" })
       });
     } else {
       createIncome(payload, {
@@ -126,7 +126,7 @@ export default function AddIncome() {
           toast({ title: "Success", description: "Income created successfully" });
           setLocation("/income");
         },
-        onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" })
+        onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" })
       });
     }
   };

@@ -48,6 +48,26 @@ export function useDeleteExpense() {
   });
 }
 
+export function useUpdateExpense() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & CreateExpenseRequest) => {
+      const url = buildUrl(api.expenses.update.path, { id });
+      const res = await fetch(url, {
+        method: api.expenses.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update expense");
+      return api.expenses.update.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.expenses.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.expenseEntries.list.path] });
+    },
+  });
+}
+
 // === EXPENSE ENTRIES (Monthly instances) ===
 export function useExpenseEntries(params?: { month?: string; startDate?: string; endDate?: string }) {
   const queryKey = [api.expenseEntries.list.path, params?.month, params?.startDate, params?.endDate].filter(Boolean);
