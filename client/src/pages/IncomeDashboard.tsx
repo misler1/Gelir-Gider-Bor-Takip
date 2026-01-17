@@ -63,9 +63,9 @@ export default function IncomeDashboard() {
   /* -------------------- MONTH FILTER -------------------- */
   const filteredEntries = useMemo(() => {
     return allEntries.filter((e) => {
-      const d = new Date(e.date);
-      const entryMonth = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-      return entryMonth === selectedMonth;
+      // Backend ISO string formatında tarih gönderiyor (örn: 2026-02-05T00:00:00.000Z)
+      // selectedMonth formatı ise yyyy-MM (örn: 2026-02)
+      return typeof e.date === "string" && e.date.startsWith(selectedMonth);
     });
   }, [allEntries, selectedMonth]);
 

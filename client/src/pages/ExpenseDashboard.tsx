@@ -34,9 +34,9 @@ export default function ExpenseDashboard() {
   
   // Normalize dates for filtering to handle timezone offsets
   const entries = allEntries?.filter(e => {
-    const entryDate = new Date(e.date);
-    const entryMonth = entryDate.getFullYear() + "-" + String(entryDate.getMonth() + 1).padStart(2, '0');
-    return entryMonth === selectedMonth;
+    // Backend ISO string formatında tarih gönderiyor (örn: 2026-02-05T00:00:00.000Z)
+    // selectedMonth formatı ise yyyy-MM (örn: 2026-02)
+    return typeof e.date === "string" && e.date.startsWith(selectedMonth);
   });
   const { mutate: updateEntry } = useUpdateExpenseEntry();
   const { mutate: deleteExpense } = useDeleteExpense();
