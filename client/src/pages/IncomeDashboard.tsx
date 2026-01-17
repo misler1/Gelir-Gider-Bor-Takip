@@ -65,13 +65,10 @@ export default function IncomeDashboard() {
     return allEntries.filter((e) => {
       // Backend ISO string formatında tarih gönderiyor (örn: 2026-02-05T00:00:00.000Z)
       // selectedMonth formatı ise yyyy-MM (örn: 2026-02)
-      // Yerel saate göre yıl-ay bilgisini alıyoruz
+      // ISO string'in başı selectedMonth ile eşleşiyorsa o aya aittir (UTC bazlı)
       try {
-        const date = new Date(e.date);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const entryMonth = `${year}-${month}`;
-        return entryMonth === selectedMonth;
+        const dateStr = typeof e.date === "string" ? e.date : new Date(e.date).toISOString();
+        return dateStr.startsWith(selectedMonth);
       } catch (err) {
         return false;
       }
