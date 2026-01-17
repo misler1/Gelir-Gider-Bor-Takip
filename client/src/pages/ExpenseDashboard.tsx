@@ -32,14 +32,20 @@ export default function ExpenseDashboard() {
 
   const { data: allEntries, isLoading: isLoadingEntries } = useExpenseEntries();
   
-  // Normalize dates for filtering to handle timezone offsets
+  // Normalize dates for filtering to handle indexing (Day 5 logic)
   const entries = allEntries?.filter(e => {
-    // Backend ISO string formatında tarih gönderiyor (örn: 2026-02-05T00:00:00.000Z)
-    // selectedMonth formatı ise yyyy-MM (örn: 2026-02)
-    // İlk 7 karakter karşılaştırması en kesin yöntemdir.
     if (!e.date) return false;
-    const dateStr = String(e.date);
-    return dateStr.substring(0, 7) === selectedMonth;
+    const entryDate = new Date(e.date);
+    const day = entryDate.getDate();
+    
+    let targetDate = new Date(entryDate);
+    if (day >= 5) {
+      // Ayın 5'i ve sonrası -> Bir sonraki aya endekslenir
+      targetDate.setMonth(targetDate.getMonth() + 1);
+    }
+    
+    const targetMonthStr = format(targetDate, "yyyy-MM");
+    return targetMonthStr === selectedMonth;
   });
   const { mutate: updateEntry } = useUpdateExpenseEntry();
   const { mutate: deleteExpense } = useDeleteExpense();
