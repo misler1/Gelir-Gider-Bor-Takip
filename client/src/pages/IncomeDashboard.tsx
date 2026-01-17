@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Link } from "wouter";
-import { useIncomes, useIncomeEntries, useUpdateIncomeEntry, useDeleteIncome } from "@/hooks/use-incomes";
+import { useLocation, Link } from "wouter";
+import {
+  useIncomeEntries,
+  useUpdateIncomeEntry,
+  useDeleteIncome,
+} from "@/hooks/use-incomes";
+import { useExpenseEntries } from "@/hooks/use-expenses";
+
 import { Layout } from "@/components/Layout";
 import { StatCard } from "@/components/StatCard";
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
-import { Plus, Wallet, TrendingUp, Calendar, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -23,79 +27,108 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useExpenses, useExpenseEntries } from "@/hooks/use-expenses"; // For Cash Balance calc
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+import { Plus, Wallet, TrendingUp, Calendar, Trash2 } from "lucide-react";
+import { format, parseISO } from "date-fns";
 
 export default function IncomeDashboard() {
-  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"));
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const startDate = format(startOfMonth(new Date(selectedMonth)), "yyyy-MM-dd");
-  const endDate = format(endOfMonth(new Date(selectedMonth)), "yyyy-MM-dd");
+  /* -------------------- STATE -------------------- */
+  const [selectedMonth, setSelectedMonth] = useState(
+    format(new Date(), "yyyy-MM"),
+  );
 
-  const { data: allEntries, isLoading: isLoadingEntries } = useIncomeEntries();
-  
-  // Normalize dates for filtering to handle timezone offsets
-  const entries = allEntries?.filter(e => {
-    const entryDate = new Date(e.date);
-    const entryMonth = entryDate.getUTCFullYear() + "-" + String(entryDate.getUTCMonth() + 1).padStart(2, '0');
-    return entryMonth === selectedMonth;
+  /* -------------------- DATA -------------------- */
+  const { data: entries = [], isLoading: isLoadingEntries } = useIncomeEntries({
+    month: selectedMonth,
   });
+
+  const { data: expenseEntries = [] } = useExpenseEntries({
+    month: selectedMonth,
+  });
+
   const { mutate: updateEntry } = useUpdateIncomeEntry();
   const { mutate: deleteIncome } = useDeleteIncome();
 
-  // For Cash Balance Calculation
-  const { data: expenseEntries } = useExpenseEntries({ month: selectedMonth });
-  
-  const totalExpectedIncome = entries?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
-  
+  /* -------------------- CALCULATIONS -------------------- */
+  const totalExpectedIncome = entries.reduce(
+    (sum, e) => sum + Number(e.amount),
+    0,
+  );
+
   const receivedIncome = entries
-    ?.filter(e => e.isReceived)
-    .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+    .filter((e) => e.isReceived)
+    .reduce((sum, e) => sum + Number(e.amount), 0);
 
   const paidExpenses = expenseEntries
-    ?.filter(e => e.isPaid)
-    .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
-    
+    .filter((e) => e.isPaid)
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+
   const cashBalance = receivedIncome - paidExpenses;
 
-  const handleToggleReceived = (id: number, currentStatus: boolean) => {
-    updateEntry({ id, isReceived: !currentStatus });
+  /* -------------------- HANDLERS -------------------- */
+  const handleToggleReceived = (id: number, current: boolean) => {
+    updateEntry({ id, isReceived: !current });
   };
 
   const handleDelete = (incomeId: number) => {
     deleteIncome(incomeId, {
       onSuccess: () => {
-        toast({ title: "Income deleted", description: "The income source and all its entries have been removed." });
+        toast({
+          title: "Income deleted",
+          description:
+            "The income source and all its entries have been removed.",
+        });
       },
       onError: () => {
-        toast({ title: "Error", description: "Could not delete income.", variant: "destructive" });
-      }
+        toast({
+          title: "Error",
+          description: "Could not delete income.",
+          variant: "destructive",
+        });
+      },
     });
   };
 
+  /* -------------------- UI -------------------- */
   return (
     <Layout>
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground">Income Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Track your earnings and cash flow.</p>
+          <h1 className="text-3xl font-bold">Income Dashboard</h1>
+          <p className="text-muted-foreground">
+            Track your earnings and cash flow
+          </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
-           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px] bg-background">
-              <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[180px]">
+              <Calendar className="w-4 h-4 mr-2" />
               <SelectValue placeholder="Select month" />
             </SelectTrigger>
             <SelectContent>
               {Array.from({ length: 12 }).map((_, i) => {
-                const date = new Date();
-                date.setMonth(date.getMonth() - 5 + i); // Show 5 months back, 6 forward
-                const value = format(date, "yyyy-MM");
+                const d = new Date();
+                d.setMonth(d.getMonth() - 5 + i);
+                const value = format(d, "yyyy-MM");
                 return (
                   <SelectItem key={value} value={value}>
-                    {format(date, "MMMM yyyy")}
+                    {format(d, "MMMM yyyy")}
                   </SelectItem>
                 );
               })}
@@ -103,7 +136,7 @@ export default function IncomeDashboard() {
           </Select>
 
           <Link href="/income/add">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20">
+            <Button>
               <Plus className="w-4 h-4 mr-2" />
               Add Income
             </Button>
@@ -111,113 +144,120 @@ export default function IncomeDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         <StatCard
           title="Monthly Expected"
-          value={`$${totalExpectedIncome.toFixed(2)}`}
-          description="Total projected income for this month"
+          value={`₺${totalExpectedIncome.toLocaleString()}`}
+          description="Projected income"
           icon={TrendingUp}
           variant="success"
         />
         <StatCard
           title="Cash Balance"
-          value={`$${cashBalance.toFixed(2)}`}
-          description="Received Income - Paid Expenses"
+          value={`₺${cashBalance.toLocaleString()}`}
+          description="Received - Paid expenses"
           icon={Wallet}
           variant={cashBalance >= 0 ? "default" : "danger"}
         />
         <StatCard
           title="Progress"
-          value={`${entries?.length ? Math.round((entries.filter(e => e.isReceived).length / entries.length) * 100) : 0}%`}
-          description="Incomes received this month"
+          value={`${
+            entries.length
+              ? Math.round(
+                  (entries.filter((e) => e.isReceived).length /
+                    entries.length) *
+                    100,
+                )
+              : 0
+          }%`}
+          description="Received incomes"
           icon={Calendar}
-          variant="neutral"
         />
       </div>
 
-      <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-border">
-          <h3 className="font-semibold text-lg">Income Entries - {format(parseISO(selectedMonth + "-01"), "MMMM yyyy")}</h3>
+      {/* TABLE */}
+      <div className="bg-card rounded-xl border mt-6 overflow-hidden">
+        <div className="p-4 border-b font-semibold">
+          Income Entries –{" "}
+          {format(parseISO(selectedMonth + "-01"), "MMMM yyyy")}
         </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Status</TableHead>
+              <TableHead>Source</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {isLoadingEntries ? (
               <TableRow>
-                <TableHead>Status</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="w-[120px]"></TableHead>
+                <TableCell colSpan={5} className="text-center py-6">
+                  Loading...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingEntries ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading...</TableCell>
-                </TableRow>
-              ) : entries?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No income entries for this month.</TableCell>
-                </TableRow>
-              ) : (
-                entries?.map((entry) => (
-                  <TableRow key={entry.id} className="group">
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Checkbox 
-                          checked={entry.isReceived || false}
-                          onCheckedChange={() => handleToggleReceived(entry.id, entry.isReceived || false)}
-                          className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                        />
-                        <span className={`text-sm ${entry.isReceived ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}`}>
-                          {entry.isReceived ? 'Received' : 'Pending'}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium text-foreground">{entry.incomeName}</TableCell>
-                    <TableCell className="text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy")}</TableCell>
-                    <TableCell className="text-right font-mono font-medium">
-                      ₺{Number(entry.amount).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-indigo-600"
-                          onClick={() => setLocation(`/income/add?edit=${entry.incomeId}`)}
-                        >
-                          <Plus className="w-4 h-4 rotate-45" /> {/* Using Plus rotated as a proxy for edit if Edit icon not imported */}
+            ) : entries.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-6">
+                  No income entries
+                </TableCell>
+              </TableRow>
+            ) : (
+              entries.map((entry) => (
+                <TableRow key={entry.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={entry.isReceived}
+                      onCheckedChange={() =>
+                        handleToggleReceived(entry.id, entry.isReceived)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>{entry.incomeName}</TableCell>
+                  <TableCell>
+                    {format(new Date(entry.date), "dd MMM yyyy")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ₺{Number(entry.amount).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-600">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete this income source?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will delete the master record and ALL future scheduled entries. This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => entry.incomeId && handleDelete(entry.incomeId)} className="bg-red-600 hover:bg-red-700">
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete income?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will delete all related entries.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-600"
+                            onClick={() =>
+                              entry.incomeId && handleDelete(entry.incomeId)
+                            }
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </Layout>
   );
