@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useExpenses, useExpenseEntries, useUpdateExpenseEntry, useDeleteExpense } from "@/hooks/use-expenses";
 import { useIncomes, useIncomeEntries } from "@/hooks/use-incomes"; // For cash balance
 import { Layout } from "@/components/Layout";
@@ -43,6 +43,7 @@ export default function ExpenseDashboard() {
   });
   const { mutate: updateEntry } = useUpdateExpenseEntry();
   const { mutate: deleteExpense } = useDeleteExpense();
+  const [, setLocation] = useLocation();
 
   // For Cash Balance
   const { data: incomeEntries } = useIncomeEntries({ month: selectedMonth });

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   useIncomeEntries,
   useUpdateIncomeEntry,
@@ -89,6 +89,7 @@ export default function IncomeDashboard() {
   const cashBalance = receivedIncome - paidExpenses;
 
   /* -------------------- HANDLERS -------------------- */
+  const [, setLocation] = useLocation();
   const handleToggleReceived = (id: number, current: boolean) => {
     updateEntry({ id, isReceived: !current });
   };
