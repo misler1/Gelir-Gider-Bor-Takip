@@ -212,9 +212,9 @@ export default function IncomeDashboard() {
                 <TableRow key={entry.id}>
                   <TableCell>
                     <Checkbox
-                      checked={entry.isReceived}
+                      checked={entry.isReceived || false}
                       onCheckedChange={() =>
-                        handleToggleReceived(entry.id, entry.isReceived)
+                        handleToggleReceived(entry.id, !!entry.isReceived)
                       }
                     />
                   </TableCell>
