@@ -35,6 +35,7 @@ export default function AddIncome() {
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [isRecurring, setIsRecurring] = useState(false);
   const [frequency, setFrequency] = useState<"weekly" | "monthly" | "yearly">("monthly");
+  const [endDate, setEndDate] = useState<string>("");
   
   // Generated Schedule State
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
@@ -67,9 +68,11 @@ export default function AddIncome() {
 
     const newSchedule: ScheduleEntry[] = [];
     let currentDate = new Date(date);
-    const numEntries = isRecurring ? 24 : 1; 
-
-    for (let i = 0; i < numEntries; i++) {
+    const stopDate = endDate ? new Date(endDate) : addMonths(new Date(date), 24);
+    
+    // Safety break to prevent infinite loops or too many entries
+    let iterations = 0;
+    while (currentDate <= stopDate && iterations < 100) {
       newSchedule.push({
         date: format(currentDate, "yyyy-MM-dd"),
         amount: amount
@@ -78,12 +81,14 @@ export default function AddIncome() {
       if (!isRecurring) break;
 
       if (frequency === "weekly") currentDate = addDays(currentDate, 7);
-      if (frequency === "monthly") currentDate = addMonths(currentDate, 1);
-      if (frequency === "yearly") currentDate = addYears(currentDate, 1);
+      else if (frequency === "monthly") currentDate = addMonths(currentDate, 1);
+      else if (frequency === "yearly") currentDate = addYears(currentDate, 1);
+      
+      iterations++;
     }
 
     setSchedule(newSchedule);
-  }, [amount, date, isRecurring, frequency, editId, editingIncome]);
+  }, [amount, date, isRecurring, frequency, endDate, editId, editingIncome]);
 
   const handleScheduleChange = (index: number, field: keyof ScheduleEntry, value: string) => {
     const updated = [...schedule];
@@ -201,6 +206,20 @@ export default function AddIncome() {
                       <SelectItem value="yearly">Yearly</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+
+              {isRecurring && (
+                <div className="space-y-2 animate-in slide-in-from-top-2 fade-in">
+                  <Label htmlFor="endDate">End Date (Optional)</Label>
+                  <Input 
+                    id="endDate" 
+                    type="date" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)} 
+                    placeholder="Automatically 24 months if empty"
+                  />
+                  <p className="text-[10px] text-muted-foreground">Empty means 24 months projection.</p>
                 </div>
               )}
 
