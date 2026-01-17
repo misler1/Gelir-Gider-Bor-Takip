@@ -39,7 +39,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { Plus, Wallet, TrendingUp, Calendar, Trash2 } from "lucide-react";
+import { Plus, Wallet, TrendingUp, Calendar, Trash2, Edit2 } from "lucide-react";
 import { format } from "date-fns";
 
 export default function IncomeDashboard() {
@@ -238,8 +238,9 @@ export default function IncomeDashboard() {
                         onClick={() =>
                           setLocation(`/income/add?edit=${entry.incomeId}`)
                         }
+                        title="Düzenle"
                       >
-                        <Plus className="w-4 h-4 rotate-45" />
+                        <Edit2 className="w-4 h-4 text-muted-foreground" />
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>

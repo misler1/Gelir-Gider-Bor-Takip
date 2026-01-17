@@ -5,7 +5,7 @@ import { useIncomes, useIncomeEntries } from "@/hooks/use-incomes"; // For cash 
 import { Layout } from "@/components/Layout";
 import { StatCard } from "@/components/StatCard";
 import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
-import { Plus, CreditCard, TrendingDown, Calendar, Trash2, Wallet } from "lucide-react";
+import { Plus, CreditCard, TrendingDown, Calendar, Trash2, Wallet, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -187,8 +187,9 @@ export default function ExpenseDashboard() {
                           size="icon" 
                           className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-indigo-600"
                           onClick={() => setLocation(`/expenses/add?edit=${entry.expenseId}`)}
+                          title="Düzenle"
                         >
-                          <Plus className="w-4 h-4 rotate-45" />
+                          <Edit2 className="w-4 h-4" />
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
