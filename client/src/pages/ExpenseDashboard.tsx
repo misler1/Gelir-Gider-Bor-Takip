@@ -36,13 +36,9 @@ export default function ExpenseDashboard() {
   const entries = allEntries?.filter(e => {
     // Backend ISO string formatında tarih gönderiyor (örn: 2026-02-05T00:00:00.000Z)
     // selectedMonth formatı ise yyyy-MM (örn: 2026-02)
-    // ISO string'in başı selectedMonth ile eşleşiyorsa o aya aittir (UTC bazlı)
-    try {
-      const dateStr = typeof e.date === "string" ? e.date : new Date(e.date).toISOString();
-      return dateStr.startsWith(selectedMonth);
-    } catch (err) {
-      return false;
-    }
+    // En güvenli yöntem: Metin olarak tarih string'i içinde selectedMonth aramaktır
+    const dateStr = String(e.date);
+    return dateStr.includes(selectedMonth);
   });
   const { mutate: updateEntry } = useUpdateExpenseEntry();
   const { mutate: deleteExpense } = useDeleteExpense();
