@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useState, useMemo } from "react";
+import { Link } from "wouter";
 import {
   useIncomeEntries,
   useUpdateIncomeEntry,
@@ -40,10 +40,9 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { Plus, Wallet, TrendingUp, Calendar, Trash2 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 export default function IncomeDashboard() {
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   /* -------------------- STATE -------------------- */
@@ -52,9 +51,7 @@ export default function IncomeDashboard() {
   );
 
   /* -------------------- DATA -------------------- */
-  const { data: entries = [], isLoading: isLoadingEntries } = useIncomeEntries({
-    month: selectedMonth,
-  });
+  const { data: allEntries = [], isLoading: isLoadingEntries } = useIncomeEntries();
 
   const { data: expenseEntries = [] } = useExpenseEntries({
     month: selectedMonth,
@@ -63,13 +60,22 @@ export default function IncomeDashboard() {
   const { mutate: updateEntry } = useUpdateIncomeEntry();
   const { mutate: deleteIncome } = useDeleteIncome();
 
+  /* -------------------- MONTH FILTER -------------------- */
+  const filteredEntries = useMemo(() => {
+    return allEntries.filter((e) => {
+      const d = new Date(e.date);
+      const entryMonth = d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0");
+      return entryMonth === selectedMonth;
+    });
+  }, [allEntries, selectedMonth]);
+
   /* -------------------- CALCULATIONS -------------------- */
-  const totalExpectedIncome = entries.reduce(
+  const totalExpectedIncome = filteredEntries.reduce(
     (sum, e) => sum + Number(e.amount),
     0,
   );
 
-  const receivedIncome = entries
+  const receivedIncome = filteredEntries
     .filter((e) => e.isReceived)
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
@@ -86,20 +92,17 @@ export default function IncomeDashboard() {
 
   const handleDelete = (incomeId: number) => {
     deleteIncome(incomeId, {
-      onSuccess: () => {
+      onSuccess: () =>
         toast({
           title: "Income deleted",
-          description:
-            "The income source and all its entries have been removed.",
-        });
-      },
-      onError: () => {
+          description: "All related entries removed.",
+        }),
+      onError: () =>
         toast({
           title: "Error",
           description: "Could not delete income.",
           variant: "destructive",
-        });
-      },
+        }),
     });
   };
 
@@ -107,19 +110,17 @@ export default function IncomeDashboard() {
   return (
     <Layout>
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Income Dashboard</h1>
-          <p className="text-muted-foreground">
-            Track your earnings and cash flow
-          </p>
+          <p className="text-muted-foreground">Monthly income overview</p>
         </div>
 
         <div className="flex items-center gap-3">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger className="w-[180px]">
               <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Select month" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {Array.from({ length: 12 }).map((_, i) => {
@@ -147,31 +148,31 @@ export default function IncomeDashboard() {
       {/* STATS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         <StatCard
-          title="Monthly Expected"
+          title="Expected Income"
           value={`₺${totalExpectedIncome.toLocaleString()}`}
-          description="Projected income"
+          description="This month"
           icon={TrendingUp}
           variant="success"
         />
         <StatCard
           title="Cash Balance"
           value={`₺${cashBalance.toLocaleString()}`}
-          description="Received - Paid expenses"
+          description="Received - Paid"
           icon={Wallet}
           variant={cashBalance >= 0 ? "default" : "danger"}
         />
         <StatCard
           title="Progress"
           value={`${
-            entries.length
+            filteredEntries.length
               ? Math.round(
-                  (entries.filter((e) => e.isReceived).length /
-                    entries.length) *
+                  (filteredEntries.filter((e) => e.isReceived).length /
+                    filteredEntries.length) *
                     100,
                 )
               : 0
           }%`}
-          description="Received incomes"
+          description="Income received"
           icon={Calendar}
         />
       </div>
@@ -180,7 +181,7 @@ export default function IncomeDashboard() {
       <div className="bg-card rounded-xl border mt-6 overflow-hidden">
         <div className="p-4 border-b font-semibold">
           Income Entries –{" "}
-          {format(parseISO(selectedMonth + "-01"), "MMMM yyyy")}
+          {format(new Date(selectedMonth + "-01"), "MMMM yyyy")}
         </div>
 
         <Table>
@@ -197,18 +198,18 @@ export default function IncomeDashboard() {
           <TableBody>
             {isLoadingEntries ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6">
+                <TableCell colSpan={6} className="text-center py-6">
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : entries.length === 0 ? (
+            ) : filteredEntries.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6">
-                  No income entries
+                <TableCell colSpan={6} className="text-center py-6">
+                  No income for this month
                 </TableCell>
               </TableRow>
             ) : (
-              entries.map((entry) => (
+              filteredEntries.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell>
                     <Checkbox
@@ -226,32 +227,43 @@ export default function IncomeDashboard() {
                     ₺{Number(entry.amount).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete income?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will delete all related entries.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-red-600"
-                            onClick={() =>
-                              entry.incomeId && handleDelete(entry.incomeId)
-                            }
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          setLocation(`/income/add?edit=${entry.incomeId}`)
+                        }
+                      >
+                        <Plus className="w-4 h-4 rotate-45" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete income?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This deletes all months.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-red-600"
+                              onClick={() =>
+                                entry.incomeId && handleDelete(entry.incomeId)
+                              }
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

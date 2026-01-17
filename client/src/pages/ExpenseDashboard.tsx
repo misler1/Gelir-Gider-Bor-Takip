@@ -111,14 +111,14 @@ export default function ExpenseDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard
           title="Monthly Planned"
-          value={`$${totalPlannedExpenses.toFixed(2)}`}
+          value={`₺${totalPlannedExpenses.toLocaleString()}`}
           description="Total expenses for this month"
           icon={TrendingDown}
           variant="danger"
         />
         <StatCard
           title="Cash Balance"
-          value={`$${cashBalance.toFixed(2)}`}
+          value={`₺${cashBalance.toLocaleString()}`}
           description="Real-time available funds"
           icon={Wallet}
           variant={cashBalance >= 0 ? "default" : "danger"}
