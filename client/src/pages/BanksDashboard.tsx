@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useBanks, useDeleteBank } from "@/hooks/use-banks";
 import { Layout } from "@/components/Layout";
 import { useLocation } from "wouter";
-import { Plus, Landmark, Trash2, ExternalLink, Edit2 } from "lucide-react";
+import { Plus, Landmark, Trash2, ExternalLink, Edit2, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +21,8 @@ export default function BanksDashboard() {
   const { data: banks, isLoading } = useBanks();
   const { mutate: deleteBank } = useDeleteBank();
   const { toast } = useToast();
+
+  const totalMinPayment = banks?.reduce((sum, bank) => sum + Number(bank.minPaymentAmount), 0) || 0;
 
   const handleDelete = (id: number) => {
     deleteBank(id, {
@@ -44,6 +46,30 @@ export default function BanksDashboard() {
           </Button>
         </Link>
       </div>
+
+      {!isLoading && banks && banks.length > 0 && (
+        <Card className="mb-8 border-indigo-100 bg-indigo-50/30 dark:bg-indigo-950/10">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 rounded-full">
+                  <TrendingDown className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Toplam Aylık Asgari Ödeme</p>
+                  <h2 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 font-mono">
+                    ₺{totalMinPayment.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </h2>
+                </div>
+              </div>
+              <div className="text-center md:text-right">
+                <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Aktif Borç Hesabı</p>
+                <p className="text-sm font-medium">{banks.length} Banka / Hesap</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="text-center py-12">Loading...</div>
@@ -75,7 +101,7 @@ export default function BanksDashboard() {
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Debt</p>
                   <p className="text-2xl font-bold text-foreground font-mono">
-                    ${Number(bank.totalDebt).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    ₺{Number(bank.totalDebt).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </p>
                 </div>
                 
@@ -86,7 +112,7 @@ export default function BanksDashboard() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Min Payment</p>
-                    <p className="font-medium text-rose-600">${Number(bank.minPaymentAmount).toLocaleString()}</p>
+                    <p className="font-medium text-rose-600">₺{Number(bank.minPaymentAmount).toLocaleString()}</p>
                   </div>
                 </div>
               </CardContent>
