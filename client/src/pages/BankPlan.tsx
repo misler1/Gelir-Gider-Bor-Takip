@@ -28,11 +28,8 @@ export default function BankPlan() {
   if (!bank) return <div className="p-8 text-center">Bank not found</div>;
 
   const handlePayment = (index: number) => {
-    // In a real app, we'd have a specific payment record for each month.
-    // Since the schema/storage might not have pre-generated months, 
-    // we'll simulate the "Payment Made" logic.
-    // If there's an existing payment record for this bank/month, we'd update it.
-    // For now, let's assume we're marking it as paid.
+    // Ödeme yapma fonksiyonu şu an toast gösteriyor.
+    // İleride gerçek bir kayıt oluşturmak için burası güncellenebilir.
     toast({
       title: "Ödeme Kaydedildi",
       description: `${format(addMonths(new Date(), index), "MMMM yyyy")} dönemi asgari ödemesi yapıldı.`,

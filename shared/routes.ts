@@ -195,6 +195,24 @@ export const api = {
       },
     },
   },
+  bankPayments: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/bank-payments',
+      responses: {
+        200: z.array(z.any()), // Simplified for fix
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/bank-payments/:id',
+      input: z.object({ isCompleted: z.boolean().optional() }),
+      responses: {
+        200: z.any(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
