@@ -211,6 +211,7 @@ export async function registerRoutes(
         ...req.body,
         totalDebt: String(req.body.totalDebt),
         interestRate: String(req.body.interestRate),
+        minPaymentType: req.body.minPaymentType || "amount",
         minPaymentAmount: String(req.body.minPaymentAmount)
       };
       const input = api.banks.create.input.parse(body);

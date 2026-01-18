@@ -30,6 +30,7 @@ export default function AddBank() {
   const [totalDebt, setTotalDebt] = useState("");
   const [interestRate, setInterestRate] = useState("");
   const [interestType, setInterestType] = useState("Monthly");
+  const [minPaymentType, setMinPaymentType] = useState("amount");
   const [minPayment, setMinPayment] = useState("");
   const [paymentDueDay, setPaymentDueDay] = useState("5");
   const [isActive, setIsActive] = useState(true);
@@ -42,11 +43,12 @@ export default function AddBank() {
       setTotalDebt(editingBank.totalDebt);
       setInterestRate(editingBank.interestRate);
       setInterestType(editingBank.interestType);
+      setMinPaymentType(editingBank.minPaymentType || "amount");
       setMinPayment(editingBank.minPaymentAmount);
       setPaymentDueDay(String(editingBank.paymentDueDay));
       setIsActive(editingBank.isActive || false);
     }
-  });
+  }, [editingBank]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +63,7 @@ export default function AddBank() {
       totalDebt,
       interestRate,
       interestType,
+      minPaymentType,
       minPaymentAmount: minPayment,
       paymentDueDay: parseInt(paymentDueDay),
       isActive
@@ -127,7 +130,25 @@ export default function AddBank() {
 
               <div className="space-y-2">
                 <Label htmlFor="minPayment">Minimum Monthly Payment</Label>
-                <Input type="number" id="minPayment" value={minPayment} onChange={e => setMinPayment(e.target.value)} placeholder="0.00" />
+                <div className="flex gap-2">
+                  <Input 
+                    type="number" 
+                    id="minPayment" 
+                    value={minPayment} 
+                    onChange={e => setMinPayment(e.target.value)} 
+                    placeholder="0.00" 
+                    className="flex-1"
+                  />
+                  <Select value={minPaymentType} onValueChange={setMinPaymentType}>
+                    <SelectTrigger className="w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="amount">₺</SelectItem>
+                      <SelectItem value="percentage">%</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">

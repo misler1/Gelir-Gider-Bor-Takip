@@ -61,6 +61,7 @@ export const banks = pgTable("banks", {
   totalDebt: text("total_debt").notNull(),
   interestRate: text("interest_rate").notNull(),
   interestType: text("interest_type").notNull(),
+  minPaymentType: text("min_payment_type").notNull().default("amount"), // "amount" or "percentage"
   minPaymentAmount: text("min_payment_amount").notNull(),
   paymentDueDay: integer("payment_due_day").default(5),
   isActive: boolean("is_active").default(true),

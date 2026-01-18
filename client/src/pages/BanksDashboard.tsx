@@ -22,7 +22,13 @@ export default function BanksDashboard() {
   const { mutate: deleteBank } = useDeleteBank();
   const { toast } = useToast();
 
-  const totalMinPayment = banks?.reduce((sum, bank) => sum + Number(bank.minPaymentAmount), 0) || 0;
+  const totalMinPayment = banks?.reduce((sum, bank) => {
+    const amount = Number(bank.minPaymentAmount);
+    if (bank.minPaymentType === "percentage") {
+      return sum + (Number(bank.totalDebt) * amount / 100);
+    }
+    return sum + amount;
+  }, 0) || 0;
 
   const handleDelete = (id: number) => {
     deleteBank(id, {
@@ -112,7 +118,9 @@ export default function BanksDashboard() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Min Payment</p>
-                    <p className="font-medium text-rose-600">₺{Number(bank.minPaymentAmount).toLocaleString()}</p>
+                    <p className="font-medium text-rose-600">
+                      {bank.minPaymentType === "percentage" ? `%${bank.minPaymentAmount}` : `₺${Number(bank.minPaymentAmount).toLocaleString()}`}
+                    </p>
                   </div>
                 </div>
               </CardContent>
