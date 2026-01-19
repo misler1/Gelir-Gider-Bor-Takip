@@ -1,6 +1,6 @@
 import { useParams, Link } from "wouter";
 import { Layout } from "@/components/Layout";
-import { useBanks } from "@/hooks/use-banks";
+import { useBanks, useUpdateBank } from "@/hooks/use-banks";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Landmark, Calendar, TrendingDown } from "lucide-react";
 import { format, addMonths } from "date-fns";
@@ -23,16 +23,39 @@ export default function BankPlan() {
   const { data: banks } = useBanks();
   const { data: payments } = useBankPayments(Number(id));
   const { mutate: updatePayment, isPending: isUpdating } = useUpdateBankPayment();
+  const { mutate: updateBank } = useUpdateBank();
   const bank = banks?.find(b => b.id === Number(id));
 
   if (!bank) return <div className="p-8 text-center">Bank not found</div>;
 
   const handlePayment = (index: number) => {
-    // Ödeme yapma fonksiyonu şu an toast gösteriyor.
-    // İleride gerçek bir kayıt oluşturmak için burası güncellenebilir.
-    toast({
-      title: "Ödeme Kaydedildi",
-      description: `${format(addMonths(new Date(), index), "MMMM yyyy")} dönemi asgari ödemesi yapıldı.`,
+    const paymentAmount = Number(bank.minPaymentAmount);
+    let finalPayment = paymentAmount;
+
+    // Eğer yüzdeyse borç üzerinden hesapla
+    if (bank.minPaymentType === "percentage") {
+      finalPayment = (Number(bank.totalDebt) * paymentAmount) / 100;
+    }
+
+    const newTotalDebt = Math.max(0, Number(bank.totalDebt) - finalPayment);
+
+    updateBank({
+      id: bank.id,
+      totalDebt: newTotalDebt.toString(),
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Ödeme Kaydedildi",
+          description: `${format(addMonths(new Date(), index), "MMMM yyyy")} dönemi için ₺${finalPayment.toLocaleString()} ödeme yapıldı ve borçtan düşüldü.`,
+        });
+      },
+      onError: () => {
+        toast({
+          title: "Hata",
+          description: "Ödeme kaydedilirken bir hata oluştu.",
+          variant: "destructive",
+        });
+      }
     });
   };
 
