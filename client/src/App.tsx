@@ -17,7 +17,7 @@ import BankPlan from "@/pages/BankPlan";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => <Redirect to="/income" />} />
+      <Route path="/" component={IncomeDashboard} />
       
       {/* Income Routes */}
       <Route path="/income" component={IncomeDashboard} />
