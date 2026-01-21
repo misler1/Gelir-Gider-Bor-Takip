@@ -75,7 +75,13 @@ export default function BankPlan() {
       const date = addMonths(new Date(), monthOffset);
       const monthKey = format(date, "yyyy-MM");
       
-      const interest = currentDebt * monthlyRate;
+      // Faiz hesaplama: Günlük ise aylık (30 gün) faize çevir, Aylık ise doğrudan kullan
+      let monthlyRateForCalculation = monthlyRate;
+      if (bank.interestType === "Daily") {
+        monthlyRateForCalculation = (Number(bank.interestRate) * 30) / 100;
+      }
+      
+      const interest = currentDebt * monthlyRateForCalculation;
       
       // Özel ödeme miktarını al veya varsayılan asgariyi kullan
       let paymentAmount = Number(bank.minPaymentAmount);
@@ -150,10 +156,10 @@ export default function BankPlan() {
         </Card>
         <Card className="border-border/50 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Aylık Faiz Oranı</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Faiz Oranı ({bank.interestType === "Daily" ? "Günlük" : "Aylık"})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">%{bank.interestRate} <span className="text-xs font-normal text-muted-foreground">({bank.interestType})</span></div>
+            <div className="text-2xl font-bold">%{bank.interestRate} <span className="text-xs font-normal text-muted-foreground">({bank.interestType === "Daily" ? "Günlük" : "Aylık"})</span></div>
           </CardContent>
         </Card>
         <Card className="border-border/50 shadow-sm">

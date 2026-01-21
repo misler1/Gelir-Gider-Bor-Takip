@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/Layout";
 import { useCreateBank, useBanks, useUpdateBank } from "@/hooks/use-banks";
@@ -36,7 +36,7 @@ export default function AddBank() {
   const [isActive, setIsActive] = useState(true);
 
   // Load editing data
-  useState(() => {
+  useEffect(() => {
     if (editingBank) {
       setName(editingBank.name);
       setDebtType(editingBank.debtType);
@@ -93,43 +93,43 @@ export default function AddBank() {
         <Button variant="ghost" size="icon" onClick={() => setLocation("/banks")}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-2xl font-bold font-display">{editId ? 'Edit Bank / Debt' : 'Add Bank / Debt'}</h1>
+        <h1 className="text-2xl font-bold font-display">{editId ? 'Banka / Borç Düzenle' : 'Banka / Borç Ekle'}</h1>
       </div>
 
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Bank Details</CardTitle>
+            <CardTitle>Banka Bilgileri</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Bank Name</Label>
-                <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Chase Sapphire" />
+                <Label htmlFor="name">Banka Adı</Label>
+                <Input id="name" value={name} onChange={e => setName(e.target.value)} placeholder="Örn: Garanti BBVA" />
               </div>
               
               <div className="space-y-2">
-                <Label>Type</Label>
+                <Label>Tür</Label>
                 <Select value={debtType} onValueChange={setDebtType}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Credit Card">Credit Card</SelectItem>
-                    <SelectItem value="Overdraft">Overdraft</SelectItem>
+                    <SelectItem value="Credit Card">Kredi Kartı</SelectItem>
+                    <SelectItem value="Overdraft">Kredili Mevduat Hesabı (KMH)</SelectItem>
                     <SelectItem value="KMH">KMH</SelectItem>
-                    <SelectItem value="Flexible Account">Flexible Account</SelectItem>
+                    <SelectItem value="Flexible Account">Esnek Hesap</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="debt">Total Debt Amount</Label>
+                <Label htmlFor="debt">Toplam Borç Tutarı</Label>
                 <Input type="number" id="debt" value={totalDebt} onChange={e => setTotalDebt(e.target.value)} placeholder="0.00" />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="minPayment">Minimum Monthly Payment</Label>
+                <Label htmlFor="minPayment">Minimum Aylık Ödeme</Label>
                 <div className="flex gap-2">
                   <Input 
                     type="number" 
@@ -152,37 +152,37 @@ export default function AddBank() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="interest">Interest Rate (%)</Label>
-                <Input type="number" id="interest" value={interestRate} onChange={e => setInterestRate(e.target.value)} placeholder="e.g. 19.99" />
+                <Label htmlFor="interest">Faiz Oranı (%)</Label>
+                <Input type="number" id="interest" value={interestRate} onChange={e => setInterestRate(e.target.value)} placeholder="Örn: 4.25" />
               </div>
 
               <div className="space-y-2">
-                <Label>Interest Period</Label>
+                <Label>Faiz Dönemi</Label>
                 <Select value={interestType} onValueChange={setInterestType}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Daily">Daily</SelectItem>
-                    <SelectItem value="Monthly">Monthly</SelectItem>
+                    <SelectItem value="Daily">Günlük</SelectItem>
+                    <SelectItem value="Monthly">Aylık</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
                <div className="space-y-2">
-                <Label htmlFor="dueDay">Payment Due Day</Label>
+                <Label htmlFor="dueDay">Ödeme Günü (Ayın Kaçı?)</Label>
                 <Input type="number" min="1" max="31" id="dueDay" value={paymentDueDay} onChange={e => setPaymentDueDay(e.target.value)} />
               </div>
 
               <div className="flex items-center justify-between pt-6">
-                <Label>Active Status</Label>
+                <Label>Aktif Durum</Label>
                 <Switch checked={isActive} onCheckedChange={setIsActive} />
               </div>
             </div>
 
             <Button onClick={handleSubmit} className="w-full mt-6" disabled={isPending}>
               {isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Save Bank
+              Bankayı Kaydet
             </Button>
           </CardContent>
         </Card>
