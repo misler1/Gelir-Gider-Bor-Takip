@@ -65,6 +65,7 @@ export const banks = pgTable("banks", {
   minPaymentAmount: text("min_payment_amount").notNull(),
   paymentDueDay: integer("payment_due_day").default(5),
   isActive: boolean("is_active").default(true),
+  paidMonths: jsonb("paid_months").$type<string[]>().notNull().default([]),
   paymentPlan: jsonb("payment_plan").$type<{
     month: string;
     startingDebt: string;

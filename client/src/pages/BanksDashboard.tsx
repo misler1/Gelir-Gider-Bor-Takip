@@ -23,6 +23,12 @@ export default function BanksDashboard() {
   const { toast } = useToast();
 
   const totalMinPayment = banks?.reduce((sum, bank) => {
+    // Bu ay ödeme yapılmış mı kontrol et
+    const currentMonth = new Date().toISOString().slice(0, 7); // yyyy-MM
+    if (bank.paidMonths?.includes(currentMonth)) {
+      return sum;
+    }
+
     const amount = Number(bank.minPaymentAmount);
     if (bank.minPaymentType === "percentage") {
       return sum + (Number(bank.totalDebt) * amount / 100);

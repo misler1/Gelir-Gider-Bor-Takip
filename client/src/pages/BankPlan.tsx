@@ -29,6 +29,13 @@ export default function BankPlan() {
   if (!bank) return <div className="p-8 text-center">Bank not found</div>;
 
   const handlePayment = (index: number) => {
+    const paymentDate = format(addMonths(new Date(), index), "yyyy-MM");
+    
+    // Zaten ödenmişse işlem yapma
+    if (bank.paidMonths?.includes(paymentDate)) {
+      return;
+    }
+
     const paymentAmount = Number(bank.minPaymentAmount);
     let finalPayment = paymentAmount;
 
@@ -38,15 +45,17 @@ export default function BankPlan() {
     }
 
     const newTotalDebt = Math.max(0, Number(bank.totalDebt) - finalPayment);
+    const newPaidMonths = [...(bank.paidMonths || []), paymentDate];
 
     updateBank({
       id: bank.id,
       totalDebt: newTotalDebt.toString(),
+      paidMonths: newPaidMonths,
     }, {
       onSuccess: () => {
         toast({
           title: "Ödeme Kaydedildi",
-          description: `${format(addMonths(new Date(), index), "MMMM yyyy")} dönemi için ₺${finalPayment.toLocaleString()} ödeme yapıldı ve borçtan düşüldü.`,
+          description: `${format(addMonths(new Date(), index), "MMMM yyyy")} dönemi için ₺${finalPayment.toLocaleString()} ödeme yapıldı, borçtan ve aylık asgari tutardan düşüldü.`,
         });
       },
       onError: () => {
@@ -139,15 +148,27 @@ export default function BankPlan() {
                   <TableCell className="text-right font-mono font-bold text-rose-600">₺{row.amount.toLocaleString()}</TableCell>
                   <TableCell className="text-right font-mono text-muted-foreground">₺{row.interest.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                   <TableCell className="text-right">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="h-8 gap-1 hover:bg-green-50 hover:text-green-600 hover:border-green-200"
-                      onClick={() => handlePayment(idx)}
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Ödeme Yapıldı
-                    </Button>
+                    {bank.paidMonths?.includes(format(row.date, "yyyy-MM")) ? (
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-8 gap-1 text-green-600 bg-green-50 border-green-200 cursor-default hover:bg-green-50 hover:text-green-600"
+                        disabled
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Ödendi
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="h-8 gap-1 hover:bg-green-50 hover:text-green-600 hover:border-green-200"
+                        onClick={() => handlePayment(idx)}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Ödeme Yapıldı
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
