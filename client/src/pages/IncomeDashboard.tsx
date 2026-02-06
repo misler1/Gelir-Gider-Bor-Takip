@@ -39,51 +39,94 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { Plus, Wallet, TrendingUp, Calendar, Trash2, Edit2 } from "lucide-react";
+import {
+  Plus,
+  Wallet,
+  TrendingUp,
+  Calendar,
+  Trash2,
+  Edit2,
+} from "lucide-react";
 import { format } from "date-fns";
+
+/* -------------------- MONTH & YEAR OPTIONS -------------------- */
+const months = [
+  { value: 1, label: "Ocak" },
+  { value: 2, label: "Şubat" },
+  { value: 3, label: "Mart" },
+  { value: 4, label: "Nisan" },
+  { value: 5, label: "Mayıs" },
+  { value: 6, label: "Haziran" },
+  { value: 7, label: "Temmuz" },
+  { value: 8, label: "Ağustos" },
+  { value: 9, label: "Eylül" },
+  { value: 10, label: "Ekim" },
+  { value: 11, label: "Kasım" },
+  { value: 12, label: "Aralık" },
+];
 
 export default function IncomeDashboard() {
   const { toast } = useToast();
+  const now = new Date();
 
   /* -------------------- STATE -------------------- */
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    const day = now.getDate();
-    const displayDate = new Date(now);
-    if (day >= 6) {
-      displayDate.setMonth(displayDate.getMonth() + 1);
+  const now = new Date();
+
+  const getDefaultPeriod = () => {
+    const month = now.getMonth(); // 0-based
+    const year = now.getFullYear();
+
+    // Her zaman bir sonraki ay
+    if (month === 11) {
+      // Aralık → Ocak
+      return { month: 1, year: year + 1 };
     }
-    return format(displayDate, "yyyy-MM");
-  });
+
+    return { month: month + 2, year };
+  };
+
+  const defaultPeriod = getDefaultPeriod();
+
+  const [selectedMonth, setSelectedMonth] = useState<number>(
+    defaultPeriod.month,
+  );
+  const [selectedYear, setSelectedYear] = useState<number>(defaultPeriod.year);
+
+  const years = Array.from({ length: 7 }, (_, i) => now.getFullYear() + i);
 
   /* -------------------- DATA -------------------- */
-  const { data: allEntries = [], isLoading: isLoadingEntries } = useIncomeEntries();
+  const { data: allEntries = [], isLoading: isLoadingEntries } =
+    useIncomeEntries();
 
   const { data: expenseEntries = [] } = useExpenseEntries({
     month: selectedMonth,
+    year: selectedYear,
   });
 
   const { mutate: updateEntry } = useUpdateIncomeEntry();
   const { mutate: deleteIncome } = useDeleteIncome();
 
-  /* -------------------- MONTH FILTER -------------------- */
+  /* -------------------- FILTER -------------------- */
   const filteredEntries = useMemo(() => {
     return allEntries.filter((e) => {
       if (!e.date) return false;
+
       const entryDate = new Date(e.date);
       const day = entryDate.getDate();
-      
-      let targetDate = new Date(entryDate);
-      if (day >= 5) {
-        // Ayın 5'i ve sonrası -> Bir sonraki aya endekslenir
-        targetDate.setMonth(targetDate.getMonth() + 1);
+
+      // Endeksleme tarihi
+      const indexedDate = new Date(entryDate);
+
+      if (day >= 6) {
+        indexedDate.setMonth(indexedDate.getMonth() + 1);
       }
-      // Ayın 5'inden önce -> Mevcut aya endekslenir
-      
-      const targetMonthStr = format(targetDate, "yyyy-MM");
-      return targetMonthStr === selectedMonth;
+
+      return (
+        indexedDate.getMonth() + 1 === selectedMonth &&
+        indexedDate.getFullYear() === selectedYear
+      );
     });
-  }, [allEntries, selectedMonth]);
+  }, [allEntries, selectedMonth, selectedYear]);
 
   /* -------------------- CALCULATIONS -------------------- */
   const totalExpectedIncome = filteredEntries.reduce(
@@ -103,6 +146,7 @@ export default function IncomeDashboard() {
 
   /* -------------------- HANDLERS -------------------- */
   const [, setLocation] = useLocation();
+
   const handleToggleReceived = (id: number, current: boolean) => {
     updateEntry({ id, isReceived: !current });
   };
@@ -134,22 +178,37 @@ export default function IncomeDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px]">
-              <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue />
+          {/* MONTH SELECT */}
+          <Select
+            value={String(selectedMonth)}
+            onValueChange={(v) => setSelectedMonth(Number(v))}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Ay" />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 12 }).map((_, i) => {
-                const d = new Date();
-                d.setMonth(d.getMonth() - 5 + i);
-                const value = format(d, "yyyy-MM");
-                return (
-                  <SelectItem key={value} value={value}>
-                    {format(d, "MMMM yyyy")}
-                  </SelectItem>
-                );
-              })}
+              {months.map((m) => (
+                <SelectItem key={m.value} value={String(m.value)}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* YEAR SELECT */}
+          <Select
+            value={String(selectedYear)}
+            onValueChange={(v) => setSelectedYear(Number(v))}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Yıl" />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -167,7 +226,7 @@ export default function IncomeDashboard() {
         <StatCard
           title="Expected Income"
           value={`₺${totalExpectedIncome.toLocaleString()}`}
-          description="This month"
+          description="Selected period"
           icon={TrendingUp}
           variant="success"
         />
@@ -198,7 +257,7 @@ export default function IncomeDashboard() {
       <div className="bg-card rounded-xl border mt-6 overflow-hidden">
         <div className="p-4 border-b font-semibold">
           Income Entries –{" "}
-          {format(new Date(selectedMonth + "-01"), "MMMM yyyy")}
+          {months.find((m) => m.value === selectedMonth)?.label} {selectedYear}
         </div>
 
         <Table>
@@ -222,7 +281,7 @@ export default function IncomeDashboard() {
             ) : filteredEntries.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-6">
-                  No income for this month
+                  No income for this period
                 </TableCell>
               </TableRow>
             ) : (
@@ -251,7 +310,6 @@ export default function IncomeDashboard() {
                         onClick={() =>
                           setLocation(`/income/add?edit=${entry.incomeId}`)
                         }
-                        title="Düzenle"
                       >
                         <Edit2 className="w-4 h-4 text-muted-foreground" />
                       </Button>

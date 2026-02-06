@@ -1,11 +1,23 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useExpenses, useExpenseEntries, useUpdateExpenseEntry, useDeleteExpense } from "@/hooks/use-expenses";
-import { useIncomes, useIncomeEntries } from "@/hooks/use-incomes"; // For cash balance
+import {
+  useExpenseEntries,
+  useUpdateExpenseEntry,
+  useDeleteExpense,
+} from "@/hooks/use-expenses";
+import { useIncomeEntries } from "@/hooks/use-incomes";
 import { Layout } from "@/components/Layout";
 import { StatCard } from "@/components/StatCard";
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
-import { Plus, CreditCard, TrendingDown, Calendar, Trash2, Wallet, Edit2 } from "lucide-react";
+import { format } from "date-fns";
+import {
+  Plus,
+  CreditCard,
+  TrendingDown,
+  Calendar,
+  Trash2,
+  Wallet,
+  Edit2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -24,93 +36,144 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+/* -------------------- AY İSİMLERİ -------------------- */
+const MONTHS = [
+  "Ocak",
+  "Şubat",
+  "Mart",
+  "Nisan",
+  "Mayıs",
+  "Haziran",
+  "Temmuz",
+  "Ağustos",
+  "Eylül",
+  "Ekim",
+  "Kasım",
+  "Aralık",
+];
 
 export default function ExpenseDashboard() {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    const day = now.getDate();
-    const displayDate = new Date(now);
-    if (day >= 6) {
-      displayDate.setMonth(displayDate.getMonth() + 1);
-    }
-    return format(displayDate, "yyyy-MM");
-  });
-  const { toast } = useToast();
+  const now = new Date();
 
-  const { data: allEntries, isLoading: isLoadingEntries } = useExpenseEntries();
-  
-  // Normalize dates for filtering to handle indexing (Day 5 logic)
-  const entries = allEntries?.filter(e => {
-    if (!e.date) return false;
-    const entryDate = new Date(e.date);
-    const day = entryDate.getDate();
-    
-    let targetDate = new Date(entryDate);
-    if (day >= 5) {
-      // Ayın 5'i ve sonrası -> Bir sonraki aya endekslenir
-      targetDate.setMonth(targetDate.getMonth() + 1);
+  /* -------------------- DEFAULT DÖNEM (HER ZAMAN +1 AY) -------------------- */
+  const getDefaultPeriod = () => {
+    const month = now.getMonth(); // 0-based
+    const year = now.getFullYear();
+
+    if (month === 11) {
+      // Aralık → Ocak
+      return { month: 0, year: year + 1 };
     }
-    
-    const targetMonthStr = format(targetDate, "yyyy-MM");
-    return targetMonthStr === selectedMonth;
-  });
-  const { mutate: updateEntry } = useUpdateExpenseEntry();
-  const { mutate: deleteExpense } = useDeleteExpense();
+
+    return { month: month + 1, year };
+  };
+
+  const defaultPeriod = getDefaultPeriod();
+
+  /* -------------------- STATE -------------------- */
+  const [selectedYear, setSelectedYear] = useState(defaultPeriod.year);
+  const [selectedMonth, setSelectedMonth] = useState(defaultPeriod.month);
+
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  // For Cash Balance
-  const { data: incomeEntries } = useIncomeEntries({ month: selectedMonth });
-  
-  const totalPlannedExpenses = entries?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
-  
-  const paidExpenses = entries
-    ?.filter(e => e.isPaid)
-    .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
-  
+  /* -------------------- DATA -------------------- */
+  const { data: allEntries = [], isLoading } = useExpenseEntries();
+  const { mutate: updateEntry } = useUpdateExpenseEntry();
+  const { mutate: deleteExpense } = useDeleteExpense();
+
+  /* -------------------- 6–5 ENDESKLEME FİLTRESİ -------------------- */
+  const entries = allEntries.filter((e) => {
+    if (!e.date) return false;
+
+    const entryDate = new Date(e.date);
+    const indexedDate = new Date(entryDate);
+
+    // Ayın 6'sı ve sonrası → bir sonraki ay
+    if (entryDate.getDate() >= 6) {
+      indexedDate.setMonth(indexedDate.getMonth() + 1);
+    }
+
+    return (
+      indexedDate.getFullYear() === selectedYear &&
+      indexedDate.getMonth() === selectedMonth
+    );
+  });
+
+  /* -------------------- NAKİT HESAPLAMA -------------------- */
+  const monthKey = `${selectedYear}-${String(selectedMonth + 1).padStart(
+    2,
+    "0",
+  )}`;
+
+  const { data: incomeEntries = [] } = useIncomeEntries({ month: monthKey });
+
+  const totalPlanned = entries.reduce((sum, e) => sum + Number(e.amount), 0);
+
+  const paidTotal = entries
+    .filter((e) => e.isPaid)
+    .reduce((sum, e) => sum + Number(e.amount), 0);
+
   const receivedIncome = incomeEntries
-    ?.filter(e => e.isReceived)
-    .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+    .filter((i) => i.isReceived)
+    .reduce((sum, i) => sum + Number(i.amount), 0);
 
-  const cashBalance = receivedIncome - paidExpenses;
+  const cashBalance = receivedIncome - paidTotal;
 
-  const handleTogglePaid = (id: number, currentStatus: boolean) => {
-    updateEntry({ id, isPaid: !currentStatus });
-  };
-
-  const handleDelete = (expenseId: number) => {
-    deleteExpense(expenseId, {
-      onSuccess: () => {
-        toast({ title: "Expense deleted", description: "Expense and all future entries removed." });
-      },
-      onError: () => {
-        toast({ title: "Error", description: "Could not delete expense.", variant: "destructive" });
-      }
-    });
-  };
-
+  /* -------------------- UI -------------------- */
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-display text-foreground">Expenses Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Manage your spending and bills.</p>
+          <h1 className="text-3xl font-bold">Expenses Dashboard</h1>
+          <p className="text-muted-foreground">Giderlerinizi yönetin</p>
         </div>
-        
-        <div className="flex items-center gap-3">
-           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[180px] bg-background">
-              <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Select month" />
+
+        {/* AY + YIL */}
+        <div className="flex gap-3 items-center">
+          <Select
+            value={String(selectedMonth)}
+            onValueChange={(v) => setSelectedMonth(Number(v))}
+          >
+            <SelectTrigger className="w-[140px]">
+              <Calendar className="w-4 h-4 mr-2" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 12 }).map((_, i) => {
-                const date = new Date();
-                date.setMonth(date.getMonth() - 5 + i); 
-                const value = format(date, "yyyy-MM");
+              {MONTHS.map((m, i) => (
+                <SelectItem key={i} value={String(i)}>
+                  {m}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={String(selectedYear)}
+            onValueChange={(v) => setSelectedYear(Number(v))}
+          >
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 10 }).map((_, i) => {
+                const year = now.getFullYear() + i;
                 return (
-                  <SelectItem key={value} value={value}>
-                    {format(date, "MMMM yyyy")}
+                  <SelectItem key={year} value={String(year)}>
+                    {year}
                   </SelectItem>
                 );
               })}
@@ -118,122 +181,125 @@ export default function ExpenseDashboard() {
           </Select>
 
           <Link href="/expenses/add">
-            <Button className="bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20">
+            <Button className="bg-rose-600 text-white">
               <Plus className="w-4 h-4 mr-2" />
-              Add Expense
+              Gider Ekle
             </Button>
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* STATS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
         <StatCard
-          title="Monthly Planned"
-          value={`₺${totalPlannedExpenses.toLocaleString()}`}
-          description="Total expenses for this month"
+          title="Planlanan"
+          value={`₺${totalPlanned.toLocaleString()}`}
           icon={TrendingDown}
           variant="danger"
         />
         <StatCard
-          title="Cash Balance"
+          title="Nakit Bakiye"
           value={`₺${cashBalance.toLocaleString()}`}
-          description="Real-time available funds"
           icon={Wallet}
           variant={cashBalance >= 0 ? "default" : "danger"}
         />
         <StatCard
-          title="Paid"
-          value={`${entries?.length ? Math.round((entries.filter(e => e.isPaid).length / entries.length) * 100) : 0}%`}
-          description="Expenses paid this month"
+          title="Ödenen"
+          value={`₺${paidTotal.toLocaleString()}`}
           icon={CreditCard}
           variant="neutral"
         />
       </div>
 
-      <div className="bg-card rounded-2xl border shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-border">
-          <h3 className="font-semibold text-lg">Expense Entries - {format(parseISO(selectedMonth + "-01"), "MMMM yyyy")}</h3>
+      {/* TABLE */}
+      <div className="bg-card rounded-2xl border mt-6 overflow-hidden">
+        <div className="p-6 border-b font-semibold">
+          {MONTHS[selectedMonth]} {selectedYear}
         </div>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Durum</TableHead>
+              <TableHead>Ad</TableHead>
+              <TableHead>Tarih</TableHead>
+              <TableHead className="text-right">Tutar</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {isLoading ? (
               <TableRow>
-                <TableHead>Status</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="w-[120px]"></TableHead>
+                <TableCell colSpan={5} className="text-center py-8">
+                  Yükleniyor...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingEntries ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading...</TableCell>
-                </TableRow>
-              ) : entries?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No expense entries for this month.</TableCell>
-                </TableRow>
-              ) : (
-                entries?.map((entry) => (
-                  <TableRow key={entry.id} className="group">
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Checkbox 
-                          checked={entry.isPaid || false}
-                          onCheckedChange={() => handleTogglePaid(entry.id, entry.isPaid || false)}
-                          className="data-[state=checked]:bg-rose-600 data-[state=checked]:border-rose-600"
-                        />
-                        <span className={`text-sm ${entry.isPaid ? 'text-rose-600 font-medium' : 'text-muted-foreground'}`}>
-                          {entry.isPaid ? 'Paid' : 'Unpaid'}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium text-foreground">{entry.expenseName}</TableCell>
-                    <TableCell className="text-muted-foreground">{format(new Date(entry.date), "MMM d, yyyy")}</TableCell>
-                    <TableCell className="text-right font-mono font-medium">
-                      ₺{Number(entry.amount).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-indigo-600"
-                          onClick={() => setLocation(`/expenses/add?edit=${entry.expenseId}`)}
-                          title="Düzenle"
-                        >
-                          <Edit2 className="w-4 h-4" />
+            ) : entries.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  Kayıt yok
+                </TableCell>
+              </TableRow>
+            ) : (
+              entries.map((e) => (
+                <TableRow key={e.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={e.isPaid}
+                      onCheckedChange={() =>
+                        updateEntry({ id: e.id, isPaid: !e.isPaid })
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>{e.expenseName}</TableCell>
+                  <TableCell>
+                    {format(new Date(e.date), "dd.MM.yyyy")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ₺{Number(e.amount).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() =>
+                        setLocation(`/expenses/add?edit=${e.expenseId}`)
+                      }
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost">
+                          <Trash2 className="w-4 h-4 text-red-600" />
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-600">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete this expense?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will delete the master record and ALL future scheduled entries.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => entry.expenseId && handleDelete(entry.expenseId)} className="bg-red-600 hover:bg-red-700">
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Silinsin mi?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tüm ileri kayıtlar silinir.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-red-600"
+                            onClick={() => deleteExpense(e.expenseId)}
+                          >
+                            Sil
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </Layout>
   );

@@ -1,9 +1,4 @@
-INCOME (REVENUE) MODULE – APPLICATION REQUIREMENTS (ENGLISH)
-
-I want to build a personal finance application that includes Income, Expenses, Debt Tracking, and Debt Simulation modules.
-We will develop each module separately and then integrate them into a single application.
-
-Below are the detailed requirements for the Income module.
+are the detailed requirements for the Income module.
 
 1. General UI / UX
 
