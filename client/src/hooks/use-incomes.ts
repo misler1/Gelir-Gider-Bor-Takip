@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../shared/routes";
+import { api, buildUrl } from "../shared/routes";
 import type {
   CreateIncomeRequest,
   UpdateIncomeEntryRequest,
@@ -19,7 +19,6 @@ export function useIncomes() {
 
 export function useCreateIncome() {
   const queryClient = useQueryClient();
-}
 
   return useMutation({
     mutationFn: async (data: CreateIncomeRequest) => {
@@ -40,6 +39,7 @@ export function useCreateIncome() {
 
 export function useDeleteIncome() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.incomes.delete.path, { id });
@@ -55,6 +55,7 @@ export function useDeleteIncome() {
 
 export function useUpdateIncome() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: number } & CreateIncomeRequest) => {
       const url = buildUrl(api.incomes.update.path, { id });
@@ -74,13 +75,23 @@ export function useUpdateIncome() {
 }
 
 // === INCOME ENTRIES (Monthly instances) ===
-export function useIncomeEntries(params?: { month?: string; startDate?: string; endDate?: string }) {
-  const queryKey = [api.incomeEntries.list.path, params?.month, params?.startDate, params?.endDate].filter(Boolean);
-  
+export function useIncomeEntries(params?: {
+  month?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const queryKey = [
+    api.incomeEntries.list.path,
+    params?.month,
+    params?.startDate,
+    params?.endDate,
+  ].filter(Boolean);
+
   return useQuery({
     queryKey,
     queryFn: async () => {
       let url = api.incomeEntries.list.path;
+
       if (params) {
         const queryParams = new URLSearchParams();
         if (params.month) queryParams.set("month", params.month);
@@ -88,7 +99,7 @@ export function useIncomeEntries(params?: { month?: string; startDate?: string; 
         if (params.endDate) queryParams.set("endDate", params.endDate);
         url += `?${queryParams.toString()}`;
       }
-      
+
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch income entries");
       return api.incomeEntries.list.responses[200].parse(await res.json());
@@ -98,8 +109,11 @@ export function useIncomeEntries(params?: { month?: string; startDate?: string; 
 
 export function useUpdateIncomeEntry() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: number } & UpdateIncomeEntryRequest) => {
+    mutationFn: async (
+      { id, ...updates }: { id: number } & UpdateIncomeEntryRequest
+    ) => {
       const url = buildUrl(api.incomeEntries.update.path, { id });
       const res = await fetch(url, {
         method: api.incomeEntries.update.method,
@@ -110,7 +124,9 @@ export function useUpdateIncomeEntry() {
       return api.incomeEntries.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.incomeEntries.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.incomeEntries.list.path],
+      });
     },
   });
 }
