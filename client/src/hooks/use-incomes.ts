@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
-import { type CreateIncomeRequest, type UpdateIncomeEntryRequest } from "@shared/schema";
+import { ... } from "../shared/routes";
+import type { CreateIncomeRequest, UpdateIncomeEntryRequest} from "../shared/schema";
 
 // === INCOMES (Master Definitions) ===
 export function useIncomes() {
