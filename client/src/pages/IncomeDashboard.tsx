@@ -67,7 +67,7 @@ const months = [
 
 export default function IncomeDashboard() {
   const { toast } = useToast();
-  const now = new Date();
+  
 
   /* -------------------- STATE -------------------- */
   const now = new Date();
