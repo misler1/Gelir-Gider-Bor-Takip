@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ... } from "../shared/routes";
-import type { CreateIncomeRequest, UpdateIncomeEntryRequest} from "../shared/schema";
+import { api } from "../shared/routes";
+import type {
+  CreateIncomeRequest,
+  UpdateIncomeEntryRequest,
+} from "../shared/schema";
 
 // === INCOMES (Master Definitions) ===
 export function useIncomes() {
@@ -16,6 +19,8 @@ export function useIncomes() {
 
 export function useCreateIncome() {
   const queryClient = useQueryClient();
+}
+
   return useMutation({
     mutationFn: async (data: CreateIncomeRequest) => {
       const res = await fetch(api.incomes.create.path, {
