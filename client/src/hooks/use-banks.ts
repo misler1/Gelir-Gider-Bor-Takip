@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
-import { type CreateBankRequest, type Bank } from "@shared/schema";
+import { api, buildUrl } from "../shared/routes";
+import { type CreateBankRequest, type Bank } from "../shared/schema";
 
 // === BANKS ===
 export function useBanks() {
@@ -16,6 +16,7 @@ export function useBanks() {
 
 export function useCreateBank() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: CreateBankRequest) => {
       const res = await fetch(api.banks.create.path, {
@@ -27,15 +28,21 @@ export function useCreateBank() {
       return api.banks.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.banks.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.banks.list.path],
+      });
     },
   });
 }
 
 export function useUpdateBank() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: number } & Partial<CreateBankRequest>) => {
+    mutationFn: async ({
+      id,
+      ...updates
+    }: { id: number } & Partial<CreateBankRequest>) => {
       const url = buildUrl(api.banks.update.path, { id });
       const res = await fetch(url, {
         method: api.banks.update.method,
@@ -46,21 +53,28 @@ export function useUpdateBank() {
       return api.banks.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.banks.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.banks.list.path],
+      });
     },
   });
 }
 
 export function useDeleteBank() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.banks.delete.path, { id });
-      const res = await fetch(url, { method: api.banks.delete.method });
+      const res = await fetch(url, {
+        method: api.banks.delete.method,
+      });
       if (!res.ok) throw new Error("Failed to delete bank");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.banks.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.banks.list.path],
+      });
     },
   });
 }
@@ -68,6 +82,7 @@ export function useDeleteBank() {
 // === BANK PAYMENTS ===
 export function useBankPayments(bankId?: number) {
   const queryKey = [api.bankPayments.list.path, bankId].filter(Boolean);
+
   return useQuery({
     queryKey,
     queryFn: async () => {
@@ -84,8 +99,15 @@ export function useBankPayments(bankId?: number) {
 
 export function useUpdateBankPayment() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: number; isCompleted?: boolean }) => {
+    mutationFn: async ({
+      id,
+      ...updates
+    }: {
+      id: number;
+      isCompleted?: boolean;
+    }) => {
       const url = buildUrl(api.bankPayments.update.path, { id });
       const res = await fetch(url, {
         method: api.bankPayments.update.method,
@@ -96,7 +118,9 @@ export function useUpdateBankPayment() {
       return api.bankPayments.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.bankPayments.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.bankPayments.list.path],
+      });
     },
   });
 }
