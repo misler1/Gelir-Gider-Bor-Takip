@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
-import { type CreateExpenseRequest, type UpdateExpenseEntryRequest } from "@shared/schema";
+import { api, buildUrl } from "../shared/routes";
+import type {
+  CreateExpenseRequest,
+  UpdateExpenseEntryRequest,
+} from "../shared/schema";
 
 // === EXPENSES (Master Definitions) ===
 export function useExpenses() {
@@ -16,6 +19,7 @@ export function useExpenses() {
 
 export function useCreateExpense() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (data: CreateExpenseRequest) => {
       const res = await fetch(api.expenses.create.path, {
@@ -35,6 +39,7 @@ export function useCreateExpense() {
 
 export function useDeleteExpense() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.expenses.delete.path, { id });
@@ -50,6 +55,7 @@ export function useDeleteExpense() {
 
 export function useUpdateExpense() {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: number } & CreateExpenseRequest) => {
       const url = buildUrl(api.expenses.update.path, { id });
@@ -69,13 +75,23 @@ export function useUpdateExpense() {
 }
 
 // === EXPENSE ENTRIES (Monthly instances) ===
-export function useExpenseEntries(params?: { month?: string; startDate?: string; endDate?: string }) {
-  const queryKey = [api.expenseEntries.list.path, params?.month, params?.startDate, params?.endDate].filter(Boolean);
+export function useExpenseEntries(params?: {
+  month?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const queryKey = [
+    api.expenseEntries.list.path,
+    params?.month,
+    params?.startDate,
+    params?.endDate,
+  ].filter(Boolean);
 
   return useQuery({
     queryKey,
     queryFn: async () => {
       let url = api.expenseEntries.list.path;
+
       if (params) {
         const queryParams = new URLSearchParams();
         if (params.month) queryParams.set("month", params.month);
@@ -83,7 +99,7 @@ export function useExpenseEntries(params?: { month?: string; startDate?: string;
         if (params.endDate) queryParams.set("endDate", params.endDate);
         url += `?${queryParams.toString()}`;
       }
-      
+
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch expense entries");
       return api.expenseEntries.list.responses[200].parse(await res.json());
@@ -93,8 +109,11 @@ export function useExpenseEntries(params?: { month?: string; startDate?: string;
 
 export function useUpdateExpenseEntry() {
   const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: number } & UpdateExpenseEntryRequest) => {
+    mutationFn: async (
+      { id, ...updates }: { id: number } & UpdateExpenseEntryRequest
+    ) => {
       const url = buildUrl(api.expenseEntries.update.path, { id });
       const res = await fetch(url, {
         method: api.expenseEntries.update.method,
@@ -105,7 +124,9 @@ export function useUpdateExpenseEntry() {
       return api.expenseEntries.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.expenseEntries.list.path] });
+      queryClient.invalidateQueries({
+        queryKey: [api.expenseEntries.list.path],
+      });
     },
   });
 }
